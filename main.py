@@ -17,7 +17,7 @@ sigma = 0.1
 risk_free_rate = 0.02
 
 # Simulations Parameters
-seed = 1
+seed = 123
 nb_steps = 252
 nb_simuls = 1000
 
@@ -37,7 +37,7 @@ price = MC_Pricing(strike=strike, barrier=barrier, S0=S0, v0=v0, risk_free_rate=
 print(f"Payoff Price: {round(price, 4)}")
 
 # LSM Dataset
-X, Y, _, _ = LSM_dataset(strike=strike, barrier=barrier, v0=v0, risk_free_rate=risk_free_rate, maturity=maturity,
+X, Y, dYdX = LSM_dataset(strike=strike, barrier=barrier, v0=v0, risk_free_rate=risk_free_rate, maturity=maturity,
                          rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps, nb_simuls=nb_simuls,
                          seed=seed)
 

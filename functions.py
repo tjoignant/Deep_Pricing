@@ -79,18 +79,14 @@ def MC_Pricing(strike: float, barrier: float, S0: float, v0: float, risk_free_ra
 
 def LSM_dataset(strike: float, barrier: float, v0: float, risk_free_rate: float, maturity: float, rho: float,
                kappa: float, theta: float, sigma: float, nb_steps=252, nb_simuls=100000, seed=1):
-    S0_list = np.linspace(10, 200, nb_simuls)
     seed_list = np.arange(seed, nb_simuls + seed)
-    payoff_list = []
-    strike_diff_list = []
+    X_list = np.linspace(10, 200, nb_simuls)
+    Y_list = []
+    dYdX_list = []
     barrier_diff_list = []
-    for S0, seed in zip(S0_list, seed_list):
+    for S0, seed in zip(X_list, seed_list):
         S_matrix, V_matrix = GeneratePathsHestonEuler(S0=S0, v0=v0, risk_free_rate=risk_free_rate, maturity=maturity,
                                                       rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps,
                                                       nb_simuls=1, seed=seed)
-        payoff_list.append(Payoff(strike=strike, barrier=barrier, S=S_matrix[0]))
-        """
-        strike_diff_list.append()
-        barrier_diff_list.append()
-        """
-    return S0_list, payoff_list, strike_diff_list, barrier_diff_list
+        Y_list.append(Payoff(strike=strike, barrier=barrier, S=S_matrix[0]))
+    return X_list, Y_list, dYdX_list
