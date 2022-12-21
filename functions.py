@@ -81,7 +81,7 @@ if __name__ == '__main__':
     S_test, V_test = GeneratePathsHestonEuler(S0=100, v0=0.1, risk_free_rate=0.02, maturity=1, rho=-0.9, kappa=0.1,
                                               theta=0.5, sigma=0.1, nb_steps=252, nb_simuls=1000, seed=1)
     print("\nHeston diffusion:\n", S_test)
-    print(f"\nAverage S_T: {round(np.mean([S[-1] for S in S_test]), 4)}")
+    print(f"\nAverage S_T: {round(np.mean(S_test[:, -1]), 4)}")
     print(f"Payoff Simul_0: {Payoff(strike=100, barrier=90, S=S_test[0])}")
     price = MC_Pricing(strike=100, barrier=90, S0=100, v0=0.1, risk_free_rate=0.02, maturity=1, rho=-0.9, kappa=0.1,
                        theta=0.5, sigma=0.1, nb_steps=252, nb_simuls=1000, seed=1)
