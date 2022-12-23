@@ -8,13 +8,13 @@ barrier = 90
 maturity = 1
 
 # Heston Model Parameters
-S0 = torch.tensor(100.0, requires_grad=True)
-v0 = torch.tensor(0.1, requires_grad=True)
+S0 = torch.tensor(100.0)
+v0 = torch.tensor(0.1)
 rho = torch.tensor(-0.9)
 kappa = torch.tensor(0.1)
 theta = torch.tensor(0.5)
 sigma = torch.tensor(0.1)
-risk_free_rate = torch.tensor(0.02, requires_grad=True)
+risk_free_rate = torch.tensor(0.02)
 
 # Simulations Parameters
 seed = 123
@@ -65,29 +65,30 @@ X, Y, dYdX = LSM_dataset(strike=strike, barrier=barrier, v0=v0.clone(), risk_fre
                          maturity=maturity, rho=rho.clone(), kappa=kappa.clone(), theta=theta.clone(),
                          sigma=sigma.clone(), nb_steps=nb_steps, nb_simuls=nb_simuls, seed=seed)
 
+"""
 # MC Dataset
 MC_prices = []
-FD_deltas = []
-FD_gammas = []
-FD_rhos = []
+AAD_deltas = []
+AAD_gammas = []
+AAD_rhos = []
 S0_list = torch.linspace(10, 200, 40)
-for S_0 in S0_list:
-    MC_prices.append(MC_Pricing(strike=strike, barrier=barrier, S0=S_0.clone(), v0=v0.clone(),
+for S0 in S0_list:
+    MC_prices.append(MC_Pricing(strike=strike, barrier=barrier, S0=S0.clone(), v0=v0.clone(),
                                 risk_free_rate=risk_free_rate.clone(), maturity=maturity, rho=rho.clone(),
                                 kappa=kappa.clone(), theta=theta.clone(), sigma=sigma.clone(), nb_steps=nb_steps,
                                 nb_simuls=nb_simuls, seed=seed))
-    FD_deltas.append(DeltaAAD(strike=strike, barrier=barrier, S0=S_0.clone(), v0=v0.clone(),
-                                risk_free_rate=risk_free_rate.clone(), maturity=maturity, rho=rho.clone(),
-                                kappa=kappa.clone(), theta=theta.clone(), sigma=sigma.clone(), nb_steps=nb_steps,
-                                nb_simuls=nb_simuls, seed=seed))
-    FD_gammas.append(GammaAAD(strike=strike, barrier=barrier, S0=S_0.clone(), v0=v0.clone(),
-                                risk_free_rate=risk_free_rate.clone(), maturity=maturity, rho=rho.clone(),
-                                kappa=kappa.clone(), theta=theta.clone(), sigma=sigma.clone(), nb_steps=nb_steps,
-                                nb_simuls=nb_simuls, seed=seed))
-    FD_rhos.append(RhoAAD(strike=strike, barrier=barrier, S0=S_0.clone(), v0=v0.clone(),
-                                risk_free_rate=risk_free_rate.clone(), maturity=maturity, rho=rho.clone(),
-                                kappa=kappa.clone(), theta=theta.clone(), sigma=sigma.clone(), nb_steps=nb_steps,
-                                nb_simuls=nb_simuls, seed=seed))
+    AAD_deltas.append(DeltaAAD(strike=strike, barrier=barrier, S0=S0.clone(), v0=v0.clone(),
+                               risk_free_rate=risk_free_rate.clone(), maturity=maturity, rho=rho.clone(),
+                               kappa=kappa.clone(), theta=theta.clone(), sigma=sigma.clone(), nb_steps=nb_steps,
+                               nb_simuls=nb_simuls, seed=seed))
+    AAD_gammas.append(GammaAAD(strike=strike, barrier=barrier, S0=S0.clone(), v0=v0.clone(),
+                               risk_free_rate=risk_free_rate.clone(), maturity=maturity, rho=rho.clone(),
+                               kappa=kappa.clone(), theta=theta.clone(), sigma=sigma.clone(), nb_steps=nb_steps,
+                               nb_simuls=nb_simuls, seed=seed))
+    AAD_rhos.append(RhoAAD(strike=strike, barrier=barrier, S0=S0.clone(), v0=v0.clone(),
+                           risk_free_rate=risk_free_rate.clone(), maturity=maturity, rho=rho.clone(),
+                           kappa=kappa.clone(), theta=theta.clone(), sigma=sigma.clone(), nb_steps=nb_steps,
+                           nb_simuls=nb_simuls, seed=seed))
 
 # Fig 1: Pricing Function
 fig1, ax1 = plt.subplots(figsize=(15, 7.5))
@@ -98,11 +99,12 @@ ax1.legend()
 
 # Fig 2: AAD Greeks
 fig2, ax2 = plt.subplots(figsize=(15, 7.5))
-ax2.plot(S0_list, FD_deltas, marker="o", label='Delta')
-ax2.plot(S0_list, FD_gammas, marker="o", label='Gamma')
-ax2.plot(S0_list, FD_rhos, marker="o", label='Rho')
+ax2.plot(S0_list, AAD_deltas, marker="o", label='Delta')
+ax2.plot(S0_list, AAD_gammas, marker="o", label='Gamma')
+ax2.plot(S0_list, AAD_rhos, marker="o", label='Rho')
 ax2.set_title('AAD Greeks')
 ax2.legend()
 
 # Show Graphs
 plt.show()
+"""

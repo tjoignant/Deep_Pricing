@@ -25,14 +25,15 @@ def GeneratePathsHestonEuler(S0: float, v0: float, risk_free_rate: float, maturi
     mu = torch.tensor([0, 0])
     cov = torch.tensor([[1, rho],
                         [rho, 1]])
-    S = torch.ones(size=(nb_steps + 1, nb_simuls)) * S0
-    v = torch.ones(size=(nb_steps + 1, nb_simuls)) * v0
+    S_it = torch.ones(nb_simuls) * S0
+    v_it = torch.ones(nb_simuls) * v0
     Z = torch.from_numpy(np.random.multivariate_normal(mu, cov, (nb_steps, nb_simuls)))
-    """
-    for i in range(1, nb_steps + 1):
-        S[i] = S[i - 1] * np.exp((risk_free_rate - 0.5 * v[i - 1]) * dt + np.sqrt(v[i - 1] * dt) * Z[i - 1, :, 0])
-        v[i] = np.maximum(v[i - 1] + kappa * (theta - v[i - 1]) * dt + sigma * np.sqrt(v[i - 1] * dt) * Z[i - 1, :, 1], 0)
-    """
+    S = S_it
+    for rdn in Z:
+        S_it = S_it * torch.exp((risk_free_rate - 0.5 * v_it) * dt + torch.sqrt(v_it * dt) * rdn[:, 0])
+        v_it = torch.maximum(v_it + kappa * (theta - v_it) * dt + sigma * torch.sqrt(v_it * dt) * rdn[:, 1], torch.tensor(0))
+        S = torch.cat((S, S_it), 0)
+    S = S.view(nb_steps + 1, nb_simuls)
     return S.T
 
 
@@ -59,7 +60,7 @@ def MC_Pricing(strike: float, barrier: float, S0: float, v0: float, risk_free_ra
      - strike         : american D&O Call strike (float)
      - barrier        : american D&O Call barrier (float)
      - S0, v0         : initial asset spot and variance (float)
-     - risk_free_rate : yearly asset continuous drift (perc)
+     - risk_free_rate : yearly asset continuous drift (float)
      - maturity       : yearly duration of simulation (float)
      - rho            : correlation between asset returns and variance (float)
      - kappa          : rate of mean reversion in variance process (float)
@@ -71,23 +72,23 @@ def MC_Pricing(strike: float, barrier: float, S0: float, v0: float, risk_free_ra
     Outputs:
      - american D&O Call price (float)
     """
-    S_matrix, V_matrix = GeneratePathsHestonEuler(S0=S0, v0=v0, risk_free_rate=risk_free_rate, maturity=maturity, rho=rho,
-                                           kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps,
-                                           nb_simuls=nb_simuls, seed=seed)
+    S_matrix = GeneratePathsHestonEuler(S0=S0, v0=v0, risk_free_rate=risk_free_rate, maturity=maturity, rho=rho,
+                                        kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps, nb_simuls=nb_simuls,
+                                        seed=seed)
     payoffs_sum = 0
     for S in S_matrix:
         payoffs_sum = payoffs_sum + Payoff(strike=strike, barrier=barrier, S=S)
     return torch.exp(-risk_free_rate * maturity) * (payoffs_sum / len(S_matrix))
 
 
-def DeltaAAD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate: float, maturity: float, rho: float,
+def DeltaFD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate: float, maturity: float, rho: float,
             kappa: float, theta: float, sigma: float, nb_steps=252, nb_simuls=100000, seed=1):
     """
     Inputs:
      - strike         : american D&O Call strike (float)
      - barrier        : american D&O Call barrier (float)
      - S0, v0         : initial asset spot and variance (float)
-     - risk_free_rate : yearly asset continuous drift (perc)
+     - risk_free_rate : yearly asset continuous drift (float)
      - maturity       : yearly duration of simulation (float)
      - rho            : correlation between asset returns and variance (float)
      - kappa          : rate of mean reversion in variance process (float)
@@ -100,21 +101,52 @@ def DeltaAAD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate
     Outputs:
      - american D&O Call delta (float)
     """
-    price = MC_Pricing(strike=strike, barrier=barrier, S0=S0, v0=v0, risk_free_rate=risk_free_rate,
-                       maturity=maturity, rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps,
-                       nb_simuls=nb_simuls, seed=seed)
-    price.backward()
-    return S0.grad().clone()
+    dS0 = S0 / 200
+    price_up = MC_Pricing(strike=strike, barrier=barrier, S0=S0+dS0, v0=v0, risk_free_rate=risk_free_rate,
+                          maturity=maturity, rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps,
+                          nb_simuls=nb_simuls, seed=seed)
+    price_down = MC_Pricing(strike=strike, barrier=barrier, S0=S0-dS0, v0=v0, risk_free_rate=risk_free_rate,
+                          maturity=maturity, rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps,
+                          nb_simuls=nb_simuls, seed=seed)
+    return (price_up - price_down) / (2 * dS0)
 
 
-def GammaAAD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate: float, maturity: float, rho: float,
-            kappa: float, theta: float, sigma: float, nb_steps=252, nb_simuls=100000, seed=1):
+def DeltaAAD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate: float, maturity: float, rho: float,
+             kappa: float, theta: float, sigma: float, nb_steps=252, nb_simuls=100000, seed=1):
     """
     Inputs:
      - strike         : american D&O Call strike (float)
      - barrier        : american D&O Call barrier (float)
      - S0, v0         : initial asset spot and variance (float)
-     - risk_free_rate : yearly asset continuous drift (perc)
+     - risk_free_rate : yearly asset continuous drift (float)
+     - maturity       : yearly duration of simulation (float)
+     - rho            : correlation between asset returns and variance (float)
+     - kappa          : rate of mean reversion in variance process (float)
+     - theta          : long-term mean of variance process (float)
+     - sigma          : vol of vol / volatility of variance process (float)
+     - nb_steps       : number of time steps (int)
+     - nb_simuls      : number of simulations (int)
+     - seed           : random seed (int)
+     - dS0            : S0 differential
+    Outputs:
+     - american D&O Call delta (float)
+    """
+    S0.requires_grad = True
+    price = MC_Pricing(strike=strike, barrier=barrier, S0=S0, v0=v0, risk_free_rate=risk_free_rate,
+                       maturity=maturity, rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps,
+                       nb_simuls=nb_simuls, seed=seed)
+    price.backward()
+    return S0.grad.clone()
+
+
+def GammaAAD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate: float, maturity: float, rho: float,
+             kappa: float, theta: float, sigma: float, nb_steps=252, nb_simuls=100000, seed=1):
+    """
+    Inputs:
+     - strike         : american D&O Call strike (float)
+     - barrier        : american D&O Call barrier (float)
+     - S0, v0         : initial asset spot and variance (float)
+     - risk_free_rate : yearly asset continuous drift (float)
      - maturity       : yearly duration of simulation (float)
      - rho            : correlation between asset returns and variance (float)
      - kappa          : rate of mean reversion in variance process (float)
@@ -127,21 +159,21 @@ def GammaAAD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate
     Outputs:
      - american D&O Call gamma (float)
     """
-    price = MC_Pricing(strike=strike, barrier=barrier, S0=S0, v0=v0, risk_free_rate=risk_free_rate,
-                       maturity=maturity, rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps,
-                       nb_simuls=nb_simuls, seed=seed)
+    S0.requires_grad = True
+    price = DeltaFD(strike=strike, barrier=barrier, S0=S0, v0=v0, risk_free_rate=risk_free_rate, maturity=maturity,
+                    rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps, nb_simuls=nb_simuls, seed=seed)
     price.backward()
-    return S0.grad().clone()
+    return S0.grad.clone()
 
 
 def RhoAAD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate: float, maturity: float, rho: float,
-            kappa: float, theta: float, sigma: float, nb_steps=252, nb_simuls=100000, seed=1):
+           kappa: float, theta: float, sigma: float, nb_steps=252, nb_simuls=100000, seed=1):
     """
     Inputs:
      - strike         : american D&O Call strike (float)
      - barrier        : american D&O Call barrier (float)
      - S0, v0         : initial asset spot and variance (float)
-     - risk_free_rate : yearly asset continuous drift (perc)
+     - risk_free_rate : yearly asset continuous drift (float)
      - maturity       : yearly duration of simulation (float)
      - rho            : correlation between asset returns and variance (float)
      - kappa          : rate of mean reversion in variance process (float)
@@ -154,11 +186,12 @@ def RhoAAD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate: 
     Outputs:
      - american D&O Call rho (float)
     """
+    risk_free_rate.requires_grad = True
     price = MC_Pricing(strike=strike, barrier=barrier, S0=S0, v0=v0, risk_free_rate=risk_free_rate,
                        maturity=maturity, rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps,
                        nb_simuls=nb_simuls, seed=seed)
     price.backward()
-    return risk_free_rate.grad().clone()
+    return risk_free_rate.grad.clone() / 100
 
 
 def LSM_dataset(strike: float, barrier: float, v0: float, risk_free_rate: float, maturity: float, rho: float,
@@ -168,7 +201,7 @@ def LSM_dataset(strike: float, barrier: float, v0: float, risk_free_rate: float,
      - strike         : american D&O Call strike (float)
      - barrier        : american D&O Call barrier (float)
      - v0             : initial asset variance (float)
-     - risk_free_rate : yearly asset continuous drift (perc)
+     - risk_free_rate : yearly asset continuous drift (float)
      - maturity       : yearly duration of simulation (float)
      - rho            : correlation between asset returns and variance (float)
      - kappa          : rate of mean reversion in variance process (float)
@@ -187,9 +220,9 @@ def LSM_dataset(strike: float, barrier: float, v0: float, risk_free_rate: float,
     Y_list = []
     dYdX_list = []
     for S0, seed in zip(X_list, seed_list):
-        S_matrix, V_matrix = GeneratePathsHestonEuler(S0=S0, v0=v0, risk_free_rate=risk_free_rate, maturity=maturity,
-                                                      rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps,
-                                                      nb_simuls=1, seed=seed)
+        S_matrix = GeneratePathsHestonEuler(S0=S0, v0=v0, risk_free_rate=risk_free_rate, maturity=maturity, rho=rho,
+                                            kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps, nb_simuls=1,
+                                            seed=seed)
         Y_list.append(Payoff(strike=strike, barrier=barrier, S=S_matrix[0]))
     return X_list, Y_list, dYdX_list
 

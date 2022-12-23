@@ -56,7 +56,7 @@ def MC_Pricing(strike: float, barrier: float, S0: float, v0: float, risk_free_ra
      - strike         : american D&O Call strike (float)
      - barrier        : american D&O Call barrier (float)
      - S0, v0         : initial asset spot and variance (float)
-     - risk_free_rate : yearly asset continuous drift (perc)
+     - risk_free_rate : yearly asset continuous drift (float)
      - maturity       : yearly duration of simulation (float)
      - rho            : correlation between asset returns and variance (float)
      - kappa          : rate of mean reversion in variance process (float)
@@ -84,7 +84,7 @@ def DeltaFD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate:
      - strike         : american D&O Call strike (float)
      - barrier        : american D&O Call barrier (float)
      - S0, v0         : initial asset spot and variance (float)
-     - risk_free_rate : yearly asset continuous drift (perc)
+     - risk_free_rate : yearly asset continuous drift (float)
      - maturity       : yearly duration of simulation (float)
      - rho            : correlation between asset returns and variance (float)
      - kappa          : rate of mean reversion in variance process (float)
@@ -114,7 +114,7 @@ def GammaFD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate:
      - strike         : american D&O Call strike (float)
      - barrier        : american D&O Call barrier (float)
      - S0, v0         : initial asset spot and variance (float)
-     - risk_free_rate : yearly asset continuous drift (perc)
+     - risk_free_rate : yearly asset continuous drift (float)
      - maturity       : yearly duration of simulation (float)
      - rho            : correlation between asset returns and variance (float)
      - kappa          : rate of mean reversion in variance process (float)
@@ -147,7 +147,7 @@ def RhoFD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate: f
      - strike         : american D&O Call strike (float)
      - barrier        : american D&O Call barrier (float)
      - S0, v0         : initial asset spot and variance (float)
-     - risk_free_rate : yearly asset continuous drift (perc)
+     - risk_free_rate : yearly asset continuous drift (float)
      - maturity       : yearly duration of simulation (float)
      - rho            : correlation between asset returns and variance (float)
      - kappa          : rate of mean reversion in variance process (float)
@@ -180,6 +180,7 @@ def StandardError(nb_simuls : int ,payoffvec):
     """
     return [np.mean(payoffvec)+1.96*np.std(payoffvec)/np.sqrt(nb_simuls),np.mean(payoffvec)-1.96*np.std(payoffvec)/np.sqrt(nb_simuls)]
 
+
 def LSM_dataset(strike: float, barrier: float, v0: float, risk_free_rate: float, maturity: float, rho: float,
                kappa: float, theta: float, sigma: float, nb_steps=252, nb_simuls=100000, seed=1):
     """
@@ -187,7 +188,7 @@ def LSM_dataset(strike: float, barrier: float, v0: float, risk_free_rate: float,
      - strike         : american D&O Call strike (float)
      - barrier        : american D&O Call barrier (float)
      - v0             : initial asset variance (float)
-     - risk_free_rate : yearly asset continuous drift (perc)
+     - risk_free_rate : yearly asset continuous drift (float)
      - maturity       : yearly duration of simulation (float)
      - rho            : correlation between asset returns and variance (float)
      - kappa          : rate of mean reversion in variance process (float)
