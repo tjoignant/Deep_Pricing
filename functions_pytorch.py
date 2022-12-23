@@ -1,3 +1,4 @@
+import torch
 import numpy as np
 
 
@@ -21,15 +22,17 @@ def GeneratePathsHestonEuler(S0: float, v0: float, risk_free_rate: float, maturi
     """
     np.random.seed(seed)
     dt = maturity / nb_steps
-    mu = np.array([0, 0])
-    cov = np.array([[1, rho],
-                    [rho, 1]])
-    S = np.full(shape=(nb_steps + 1, nb_simuls), fill_value=float(S0))
-    v = np.full(shape=(nb_steps + 1, nb_simuls), fill_value=float(v0))
-    Z = np.random.multivariate_normal(mu, cov, (nb_steps, nb_simuls))
+    mu = torch.tensor([0, 0])
+    cov = torch.tensor([[1, rho],
+                        [rho, 1]])
+    S = torch.ones(size=(nb_steps + 1, nb_simuls)) * S0
+    v = torch.ones(size=(nb_steps + 1, nb_simuls)) * v0
+    Z = torch.from_numpy(np.random.multivariate_normal(mu, cov, (nb_steps, nb_simuls)))
+    """
     for i in range(1, nb_steps + 1):
         S[i] = S[i - 1] * np.exp((risk_free_rate - 0.5 * v[i - 1]) * dt + np.sqrt(v[i - 1] * dt) * Z[i - 1, :, 0])
         v[i] = np.maximum(v[i - 1] + kappa * (theta - v[i - 1]) * dt + sigma * np.sqrt(v[i - 1] * dt) * Z[i - 1, :, 1], 0)
+    """
     return S.T
 
 
@@ -38,7 +41,7 @@ def Payoff(strike: float, barrier: float, S: np.array):
     Inputs:
      - strike         : american D&O Call strike (float)
      - barrier        : american D&O Call barrier (float)
-     - S              : asset prices over time (1D array)
+     - S              : asset prices over time (1D tensor)
     Outputs:
      - american D&O Call payoff (float)
     """
@@ -68,16 +71,16 @@ def MC_Pricing(strike: float, barrier: float, S0: float, v0: float, risk_free_ra
     Outputs:
      - american D&O Call price (float)
     """
-    S_matrix = GeneratePathsHestonEuler(S0=S0, v0=v0, risk_free_rate=risk_free_rate, maturity=maturity, rho=rho,
-                                        kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps, nb_simuls=nb_simuls,
-                                        seed=seed)
-    payoffs = []
+    S_matrix, V_matrix = GeneratePathsHestonEuler(S0=S0, v0=v0, risk_free_rate=risk_free_rate, maturity=maturity, rho=rho,
+                                           kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps,
+                                           nb_simuls=nb_simuls, seed=seed)
+    payoffs_sum = 0
     for S in S_matrix:
-        payoffs.append(Payoff(strike=strike, barrier=barrier, S=S))
-    return np.exp(-risk_free_rate * maturity) * np.mean(payoffs)
+        payoffs_sum = payoffs_sum + Payoff(strike=strike, barrier=barrier, S=S)
+    return torch.exp(-risk_free_rate * maturity) * (payoffs_sum / len(S_matrix))
 
 
-def DeltaFD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate: float, maturity: float, rho: float,
+def DeltaAAD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate: float, maturity: float, rho: float,
             kappa: float, theta: float, sigma: float, nb_steps=252, nb_simuls=100000, seed=1):
     """
     Inputs:
@@ -97,17 +100,14 @@ def DeltaFD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate:
     Outputs:
      - american D&O Call delta (float)
     """
-    dS0 = S0 / 200
-    price_up = MC_Pricing(strike=strike, barrier=barrier, S0=S0+dS0, v0=v0, risk_free_rate=risk_free_rate,
-                          maturity=maturity, rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps,
-                          nb_simuls=nb_simuls, seed=seed)
-    price_down = MC_Pricing(strike=strike, barrier=barrier, S0=S0-dS0, v0=v0, risk_free_rate=risk_free_rate,
-                          maturity=maturity, rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps,
-                          nb_simuls=nb_simuls, seed=seed)
-    return (price_up - price_down) / (2 * dS0)
+    price = MC_Pricing(strike=strike, barrier=barrier, S0=S0, v0=v0, risk_free_rate=risk_free_rate,
+                       maturity=maturity, rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps,
+                       nb_simuls=nb_simuls, seed=seed)
+    price.backward()
+    return S0.grad().clone()
 
 
-def GammaFD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate: float, maturity: float, rho: float,
+def GammaAAD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate: float, maturity: float, rho: float,
             kappa: float, theta: float, sigma: float, nb_steps=252, nb_simuls=100000, seed=1):
     """
     Inputs:
@@ -127,21 +127,15 @@ def GammaFD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate:
     Outputs:
      - american D&O Call gamma (float)
     """
-    dS0 = S0 / 200
-    price_up = MC_Pricing(strike=strike, barrier=barrier, S0=S0+dS0, v0=v0, risk_free_rate=risk_free_rate,
-                          maturity=maturity, rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps,
-                          nb_simuls=nb_simuls, seed=seed)
     price = MC_Pricing(strike=strike, barrier=barrier, S0=S0, v0=v0, risk_free_rate=risk_free_rate,
                        maturity=maturity, rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps,
                        nb_simuls=nb_simuls, seed=seed)
-    price_down = MC_Pricing(strike=strike, barrier=barrier, S0=S0-dS0, v0=v0, risk_free_rate=risk_free_rate,
-                          maturity=maturity, rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps,
-                          nb_simuls=nb_simuls, seed=seed)
-    return (price_up - 2 * price + price_down) / (pow(dS0, 2))
+    price.backward()
+    return S0.grad().clone()
 
 
-def RhoFD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate: float, maturity: float, rho: float,
-          kappa: float, theta: float, sigma: float, nb_steps=252, nb_simuls=100000, seed=1):
+def RhoAAD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate: float, maturity: float, rho: float,
+            kappa: float, theta: float, sigma: float, nb_steps=252, nb_simuls=100000, seed=1):
     """
     Inputs:
      - strike         : american D&O Call strike (float)
@@ -156,29 +150,16 @@ def RhoFD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate: f
      - nb_steps       : number of time steps (int)
      - nb_simuls      : number of simulations (int)
      - seed           : random seed (int)
-     - dr             : risk_free_rate differential
+     - dS0            : S0 differential
     Outputs:
      - american D&O Call rho (float)
     """
-    dr = 0.005
-    price_up = MC_Pricing(strike=strike, barrier=barrier, S0=S0, v0=v0, risk_free_rate=risk_free_rate+dr,
-                          maturity=maturity, rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps,
-                          nb_simuls=nb_simuls, seed=seed)
-    price_down = MC_Pricing(strike=strike, barrier=barrier, S0=S0, v0=v0, risk_free_rate=risk_free_rate-dr,
-                          maturity=maturity, rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps,
-                          nb_simuls=nb_simuls, seed=seed)
-    return (price_up - price_down) / (2 * dr) / 100
+    price = MC_Pricing(strike=strike, barrier=barrier, S0=S0, v0=v0, risk_free_rate=risk_free_rate,
+                       maturity=maturity, rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps,
+                       nb_simuls=nb_simuls, seed=seed)
+    price.backward()
+    return risk_free_rate.grad().clone()
 
-
-def StandardError(nb_simuls : int ,payoffvec):
-    """
-    Inputs:
-     - nb_simuls      : number of simulations (int)
-     - payoffvec      : payoff vector (table of float)
-    Outputs:
-     - Interval Confidence
-    """
-    return [np.mean(payoffvec)+1.96*np.std(payoffvec)/np.sqrt(nb_simuls),np.mean(payoffvec)-1.96*np.std(payoffvec)/np.sqrt(nb_simuls)]
 
 def LSM_dataset(strike: float, barrier: float, v0: float, risk_free_rate: float, maturity: float, rho: float,
                kappa: float, theta: float, sigma: float, nb_steps=252, nb_simuls=100000, seed=1):
@@ -202,13 +183,13 @@ def LSM_dataset(strike: float, barrier: float, v0: float, risk_free_rate: float,
      - pathwise differentials (1D array)
     """
     seed_list = np.arange(seed, nb_simuls + seed)
-    X_list = np.linspace(10, 200, nb_simuls)
+    X_list = torch.linspace(10, 200, nb_simuls)
     Y_list = []
     dYdX_list = []
     for S0, seed in zip(X_list, seed_list):
-        S_matrix = GeneratePathsHestonEuler(S0=S0, v0=v0, risk_free_rate=risk_free_rate, maturity=maturity, rho=rho,
-                                            kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps, nb_simuls=1,
-                                            seed=seed)
+        S_matrix, V_matrix = GeneratePathsHestonEuler(S0=S0, v0=v0, risk_free_rate=risk_free_rate, maturity=maturity,
+                                                      rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps,
+                                                      nb_simuls=1, seed=seed)
         Y_list.append(Payoff(strike=strike, barrier=barrier, S=S_matrix[0]))
     return X_list, Y_list, dYdX_list
 
