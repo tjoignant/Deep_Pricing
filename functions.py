@@ -46,8 +46,7 @@ def Payoff(strike: float, barrier: float, S: np.array):
         payoff = 0
     else:
         payoff = max(0, S[-1] - strike)
-    return payoff
-
+    return payoff    
 
 def MC_Pricing(strike: float, barrier: float, S0: float, v0: float, risk_free_rate: float, maturity: float, rho: float,
                kappa: float, theta: float, sigma: float, nb_steps=252, nb_simuls=100000, seed=1):
@@ -76,6 +75,70 @@ def MC_Pricing(strike: float, barrier: float, S0: float, v0: float, risk_free_ra
         payoffs.append(Payoff(strike=strike, barrier=barrier, S=S))
     return np.exp(-risk_free_rate * maturity) * np.mean(payoffs)
 
+def DeltaFD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate: float, maturity: float, rho: float,
+               kappa: float, theta: float, sigma: float, nb_steps=252, nb_simuls=100000, seed=1,delta_s =1e-5):
+    """
+    Inputs:
+     - strike         : american D&O Call strike (float)
+     - barrier        : american D&O Call barrier (float)
+     - S0, v0         : initial asset spot and variance (float)
+     - risk_free_rate : yearly asset continuous drift (perc)
+     - maturity       : yearly duration of simulation (float)
+     - rho            : correlation between asset returns and variance (float)
+     - kappa          : rate of mean reversion in variance process (float)
+     - theta          : long-term mean of variance process (float)
+     - sigma          : vol of vol / volatility of variance process (float)
+     - nb_steps       : number of time steps (int)
+     - nb_simuls      : number of simulations (int)
+     - seed           : random seed (int)
+     - delta_s        : Delta finite differences      
+    Outputs:
+     - Delta Greek of the Option (float)
+    """
+    return (MC_Pricing(strike,barrier,S0+delta_s,v0,risk_free_rate,maturity,rho,kappa,theta,sigma,nb_steps,nb_simuls,seed)-MC_Pricing(strike,barrier,S0-delta_s,v0,risk_free_rate,maturity,rho,kappa,theta,sigma,nb_steps,nb_simuls,seed))/(2*delta_s)
+def GammaFD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate: float, maturity: float, rho: float,
+               kappa: float, theta: float, sigma: float, nb_steps=252, nb_simuls=100000, seed=1,delta_s =1e-5):
+    """
+    Inputs:
+     - strike         : american D&O Call strike (float)
+     - barrier        : american D&O Call barrier (float)
+     - S0, v0         : initial asset spot and variance (float)
+     - risk_free_rate : yearly asset continuous drift (perc)
+     - maturity       : yearly duration of simulation (float)
+     - rho            : correlation between asset returns and variance (float)
+     - kappa          : rate of mean reversion in variance process (float)
+     - theta          : long-term mean of variance process (float)
+     - sigma          : vol of vol / volatility of variance process (float)
+     - nb_steps       : number of time steps (int)
+     - nb_simuls      : number of simulations (int)
+     - seed           : random seed (int)
+     - delta_s        : Delta finite differences      
+    Outputs:
+     - Gamma Greek of the Option (float)
+    """
+    return (MC_Pricing(strike,barrier,S0+delta_s,v0,risk_free_rate,maturity,rho,kappa,theta,sigma,nb_steps,nb_simuls,seed)-2*MC_Pricing(strike,barrier,S0,v0,risk_free_rate,maturity,rho,kappa,theta,sigma,nb_steps,nb_simuls,seed)+MC_Pricing(strike,barrier,S0-delta_s,v0,risk_free_rate,maturity,rho,kappa,theta,sigma,nb_steps,nb_simuls,seed))/(delta_s*delta_s)
+
+def RhoFD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate: float, maturity: float, rho: float,
+               kappa: float, theta: float, sigma: float, nb_steps=252, nb_simuls=100000, seed=1,delta_p =1e-5):
+    """
+    Inputs:
+     - strike         : american D&O Call strike (float)
+     - barrier        : american D&O Call barrier (float)
+     - S0, v0         : initial asset spot and variance (float)
+     - risk_free_rate : yearly asset continuous drift (perc)
+     - maturity       : yearly duration of simulation (float)
+     - rho            : correlation between asset returns and variance (float)
+     - kappa          : rate of mean reversion in variance process (float)
+     - theta          : long-term mean of variance process (float)
+     - sigma          : vol of vol / volatility of variance process (float)
+     - nb_steps       : number of time steps (int)
+     - nb_simuls      : number of simulations (int)
+     - seed           : random seed (int)      
+    - delta_p        : Delta finite differences
+    Outputs:
+     - Rho Greek of the Option (float)
+    """
+    return (MC_Pricing(strike,barrier,S0,v0,risk_free_rate+delta_p,maturity,rho,kappa,theta,sigma,nb_steps,nb_simuls,seed)-MC_Pricing(strike,barrier,S0,v0,risk_free_rate-delta_p,maturity,rho,kappa,theta,sigma,nb_steps,nb_simuls,seed))/(2*delta_p)
 
 def LSM_dataset(strike: float, barrier: float, v0: float, risk_free_rate: float, maturity: float, rho: float,
                kappa: float, theta: float, sigma: float, nb_steps=252, nb_simuls=100000, seed=1):

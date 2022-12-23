@@ -43,15 +43,32 @@ X, Y, dYdX = LSM_dataset(strike=strike, barrier=barrier, v0=v0, risk_free_rate=r
 
 # MC Dataset
 MC_prices = []
+Delta_values = []
+Gamma_values = []
+Rho_values = []
+
 for temp_S_0 in np.linspace(10, 200):
     temp_price = MC_Pricing(strike=strike, barrier=barrier, S0=temp_S_0, v0=v0, risk_free_rate=risk_free_rate,
                             maturity=maturity, rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps,
                             nb_simuls=nb_simuls, seed=seed)
     MC_prices.append(temp_price)
+    Delta_values.append(DeltaFD(strike=strike, barrier=barrier, S0=temp_S_0, v0=v0, risk_free_rate=risk_free_rate,
+                            maturity=maturity, rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps,
+                            nb_simuls=nb_simuls, seed=seed,delta_s=1))
+    Gamma_values.append(GammaFD(strike=strike, barrier=barrier, S0=temp_S_0, v0=v0, risk_free_rate=risk_free_rate,
+                            maturity=maturity, rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps,
+                            nb_simuls=nb_simuls, seed=seed,delta_s=1))
+    Rho_values.append(RhoFD(strike=strike, barrier=barrier, S0=temp_S_0, v0=v0, risk_free_rate=risk_free_rate,
+                            maturity=maturity, rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps,
+                            nb_simuls=nb_simuls, seed=seed,delta_p=1))
 
 # Plot Pricing Function
-plt.scatter(X, Y, marker="+", color="grey", label='LSM samples')
-plt.plot(np.linspace(10, 200), MC_prices, marker="o", color="green", label='MC pricing')
-plt.title('Heston D&O Call Pricing Function')
+#plt.scatter(X, Y, marker="+", color="grey", label='LSM samples')
+#plt.plot(np.linspace(10, 200), MC_prices, marker="o", color="green", label='MC pricing')
+plt.plot(np.linspace(10, 200), Delta_values, marker="o", color="red", label='Delta values')
+plt.plot(np.linspace(10, 200), Gamma_values, marker="o", color="blue", label='Gamma values')
+plt.plot(np.linspace(10, 200), Rho_values, marker="o", color="green", label='Rho values')
+#plt.title('Heston D&O Call Pricing Function')
+plt.title('Greeks Values with Heston Function')
 plt.legend()
 plt.show()
