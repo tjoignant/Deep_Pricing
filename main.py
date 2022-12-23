@@ -80,6 +80,18 @@ for S_0 in S0_list:
                          maturity=maturity, rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps,
                          nb_simuls=nb_simuls, seed=seed))
 
+#Interval Confidence
+confidenceinterval = []
+for simulations in range(1,1000):
+    S_test = GeneratePathsHestonEuler(S0=S0, v0=v0, risk_free_rate=risk_free_rate, maturity=maturity, rho=rho, kappa=kappa,
+                                  theta=theta, sigma=sigma, nb_steps=nb_steps, nb_simuls=simulations, seed=seed)
+    print(simulations)
+    payoffs = []
+    for S in S_test:
+        payoffs.append(Payoff(strike=strike, barrier=barrier, S=S))
+    up,down = StandardError(simulations,payoffs)
+    confidenceinterval.append(up-down)
+
 # Fig 1: Pricing Function
 fig1, ax1 = plt.subplots(figsize=(15, 7.5))
 ax1.scatter(X, Y, marker="+", color="grey", label='LSM samples')
@@ -95,5 +107,10 @@ ax2.plot(S0_list, FD_rhos, marker="o", label='Rho')
 ax2.set_title('FD Greeks')
 ax2.legend()
 
+# Fig 3: Confidence Interval
+fig3, ax3 = plt.subplots(figsize=(15, 7.5))
+ax3.plot(np.linspace(1,1000,999),confidenceinterval,marker="o",label= "Taille des intervalles")
+ax3.set_title('Confidence Interval')
+ax3.legend()
 # Show Graphs
 plt.show()
