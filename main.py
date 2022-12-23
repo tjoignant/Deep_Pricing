@@ -96,4 +96,5 @@ ax2.set_title('FD Greeks')
 ax2.legend()
 
 # Show Graphs
+
 plt.show()
