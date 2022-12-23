@@ -63,7 +63,7 @@ for temp_S_0 in np.linspace(10, 200):
     Rho_values.append(RhoFD(strike=strike, barrier=barrier, S0=temp_S_0, v0=v0, risk_free_rate=risk_free_rate,
                             maturity=maturity, rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps,
                             nb_simuls=nb_simuls, seed=seed,delta_p=1e-5))
-
+print(Gamma_values)
 #Plot Pricing Function
 #plt.scatter(X, Y, marker="+", color="grey", label='LSM samples')
 #plt.plot(np.linspace(10, 200), MC_prices, marker="o", color="green", label='MC pricing')

@@ -140,6 +140,14 @@ def RhoFD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate: f
     """
     return (MC_Pricing(strike,barrier,S0,v0,risk_free_rate+delta_p,maturity,rho,kappa,theta,sigma,nb_steps,nb_simuls,seed)-MC_Pricing(strike,barrier,S0,v0,risk_free_rate-delta_p,maturity,rho,kappa,theta,sigma,nb_steps,nb_simuls,seed))/(2*delta_p)/100
 
+def StandardError(nb_simuls : int ,payoffvec):
+    """
+    Inputs:
+     - nb_simuls      : number of simulations (int)
+     - payoffvec      : payoff vector (table of float)
+    Outputs:
+     - Interval Confidence
+    """
 def LSM_dataset(strike: float, barrier: float, v0: float, risk_free_rate: float, maturity: float, rho: float,
                kappa: float, theta: float, sigma: float, nb_steps=252, nb_simuls=100000, seed=1):
     """
