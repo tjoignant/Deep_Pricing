@@ -134,11 +134,11 @@ def RhoFD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate: f
      - nb_steps       : number of time steps (int)
      - nb_simuls      : number of simulations (int)
      - seed           : random seed (int)      
-    - delta_p        : Delta finite differences
+     - delta_p        : Delta finite differences
     Outputs:
      - Rho Greek of the Option (float)
     """
-    return (MC_Pricing(strike,barrier,S0,v0,risk_free_rate+delta_p,maturity,rho,kappa,theta,sigma,nb_steps,nb_simuls,seed)-MC_Pricing(strike,barrier,S0,v0,risk_free_rate-delta_p,maturity,rho,kappa,theta,sigma,nb_steps,nb_simuls,seed))/(2*delta_p)
+    return (MC_Pricing(strike,barrier,S0,v0,risk_free_rate+delta_p,maturity,rho,kappa,theta,sigma,nb_steps,nb_simuls,seed)-MC_Pricing(strike,barrier,S0,v0,risk_free_rate-delta_p,maturity,rho,kappa,theta,sigma,nb_steps,nb_simuls,seed))/(2*delta_p)/100
 
 def LSM_dataset(strike: float, barrier: float, v0: float, risk_free_rate: float, maturity: float, rho: float,
                kappa: float, theta: float, sigma: float, nb_steps=252, nb_simuls=100000, seed=1):
