@@ -48,6 +48,7 @@ def Payoff(strike: float, barrier: float, S: np.array):
         payoff = max(0, S[-1] - strike)
     return payoff    
 
+
 def MC_Pricing(strike: float, barrier: float, S0: float, v0: float, risk_free_rate: float, maturity: float, rho: float,
                kappa: float, theta: float, sigma: float, nb_steps=252, nb_simuls=100000, seed=1):
     """
@@ -75,8 +76,9 @@ def MC_Pricing(strike: float, barrier: float, S0: float, v0: float, risk_free_ra
         payoffs.append(Payoff(strike=strike, barrier=barrier, S=S))
     return np.exp(-risk_free_rate * maturity) * np.mean(payoffs)
 
+
 def DeltaFD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate: float, maturity: float, rho: float,
-               kappa: float, theta: float, sigma: float, nb_steps=252, nb_simuls=100000, seed=1,delta_s =1e-5):
+            kappa: float, theta: float, sigma: float, nb_steps=252, nb_simuls=100000, seed=1):
     """
     Inputs:
      - strike         : american D&O Call strike (float)
@@ -91,13 +93,22 @@ def DeltaFD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate:
      - nb_steps       : number of time steps (int)
      - nb_simuls      : number of simulations (int)
      - seed           : random seed (int)
-     - delta_s        : Delta finite differences      
+     - dS0            : S0 differential
     Outputs:
-     - Delta Greek of the Option (float)
+     - american D&O Call delta (float)
     """
-    return (MC_Pricing(strike,barrier,S0+delta_s,v0,risk_free_rate,maturity,rho,kappa,theta,sigma,nb_steps,nb_simuls,seed)-MC_Pricing(strike,barrier,S0-delta_s,v0,risk_free_rate,maturity,rho,kappa,theta,sigma,nb_steps,nb_simuls,seed))/(2*delta_s)
+    dS0 = S0 / 200
+    price_up = MC_Pricing(strike=strike, barrier=barrier, S0=S0+dS0, v0=v0, risk_free_rate=risk_free_rate,
+                          maturity=maturity, rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps,
+                          nb_simuls=nb_simuls, seed=seed)
+    price_down = MC_Pricing(strike=strike, barrier=barrier, S0=S0-dS0, v0=v0, risk_free_rate=risk_free_rate,
+                          maturity=maturity, rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps,
+                          nb_simuls=nb_simuls, seed=seed)
+    return (price_up - price_down) / (2 * dS0)
+
+
 def GammaFD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate: float, maturity: float, rho: float,
-               kappa: float, theta: float, sigma: float, nb_steps=252, nb_simuls=100000, seed=1,delta_s =1e-5):
+            kappa: float, theta: float, sigma: float, nb_steps=252, nb_simuls=100000, seed=1):
     """
     Inputs:
      - strike         : american D&O Call strike (float)
@@ -112,14 +123,25 @@ def GammaFD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate:
      - nb_steps       : number of time steps (int)
      - nb_simuls      : number of simulations (int)
      - seed           : random seed (int)
-     - delta_s        : Delta finite differences      
+     - dS0            : S0 differential
     Outputs:
-     - Gamma Greek of the Option (float)
+     - american D&O Call gamma (float)
     """
-    return (MC_Pricing(strike,barrier,S0+delta_s,v0,risk_free_rate,maturity,rho,kappa,theta,sigma,nb_steps,nb_simuls,seed)-2*MC_Pricing(strike,barrier,S0,v0,risk_free_rate,maturity,rho,kappa,theta,sigma,nb_steps,nb_simuls,seed)+MC_Pricing(strike,barrier,S0-delta_s,v0,risk_free_rate,maturity,rho,kappa,theta,sigma,nb_steps,nb_simuls,seed))/(delta_s*delta_s)
+    dS0 = S0 / 200
+    price_up = MC_Pricing(strike=strike, barrier=barrier, S0=S0+dS0, v0=v0, risk_free_rate=risk_free_rate,
+                          maturity=maturity, rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps,
+                          nb_simuls=nb_simuls, seed=seed)
+    price = MC_Pricing(strike=strike, barrier=barrier, S0=S0, v0=v0, risk_free_rate=risk_free_rate,
+                       maturity=maturity, rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps,
+                       nb_simuls=nb_simuls, seed=seed)
+    price_down = MC_Pricing(strike=strike, barrier=barrier, S0=S0-dS0, v0=v0, risk_free_rate=risk_free_rate,
+                          maturity=maturity, rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps,
+                          nb_simuls=nb_simuls, seed=seed)
+    return (price_up - 2 * price + price_down) / (pow(dS0, 2))
+
 
 def RhoFD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate: float, maturity: float, rho: float,
-               kappa: float, theta: float, sigma: float, nb_steps=252, nb_simuls=100000, seed=1,delta_p =1e-5):
+          kappa: float, theta: float, sigma: float, nb_steps=252, nb_simuls=100000, seed=1):
     """
     Inputs:
      - strike         : american D&O Call strike (float)
@@ -133,12 +155,20 @@ def RhoFD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate: f
      - sigma          : vol of vol / volatility of variance process (float)
      - nb_steps       : number of time steps (int)
      - nb_simuls      : number of simulations (int)
-     - seed           : random seed (int)      
-     - delta_p        : Delta finite differences
+     - seed           : random seed (int)
+     - dr             : risk_free_rate differential
     Outputs:
-     - Rho Greek of the Option (float)
+     - american D&O Call rho (float)
     """
-    return (MC_Pricing(strike,barrier,S0,v0,risk_free_rate+delta_p,maturity,rho,kappa,theta,sigma,nb_steps,nb_simuls,seed)-MC_Pricing(strike,barrier,S0,v0,risk_free_rate-delta_p,maturity,rho,kappa,theta,sigma,nb_steps,nb_simuls,seed))/(2*delta_p)/100
+    dr = 0.005
+    price_up = MC_Pricing(strike=strike, barrier=barrier, S0=S0, v0=v0, risk_free_rate=risk_free_rate+dr,
+                          maturity=maturity, rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps,
+                          nb_simuls=nb_simuls, seed=seed)
+    price_down = MC_Pricing(strike=strike, barrier=barrier, S0=S0, v0=v0, risk_free_rate=risk_free_rate-dr,
+                          maturity=maturity, rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps,
+                          nb_simuls=nb_simuls, seed=seed)
+    return (price_up - price_down) / (2 * dr) / 100
+
 
 def StandardError(nb_simuls : int ,payoffvec):
     """
@@ -148,6 +178,8 @@ def StandardError(nb_simuls : int ,payoffvec):
     Outputs:
      - Interval Confidence
     """
+
+
 def LSM_dataset(strike: float, barrier: float, v0: float, risk_free_rate: float, maturity: float, rho: float,
                kappa: float, theta: float, sigma: float, nb_steps=252, nb_simuls=100000, seed=1):
     """
@@ -173,7 +205,6 @@ def LSM_dataset(strike: float, barrier: float, v0: float, risk_free_rate: float,
     X_list = np.linspace(10, 200, nb_simuls)
     Y_list = []
     dYdX_list = []
-    barrier_diff_list = []
     for S0, seed in zip(X_list, seed_list):
         S_matrix, V_matrix = GeneratePathsHestonEuler(S0=S0, v0=v0, risk_free_rate=risk_free_rate, maturity=maturity,
                                                       rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps,
