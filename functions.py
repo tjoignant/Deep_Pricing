@@ -211,6 +211,9 @@ def LSM_dataset(strike: float, barrier: float, v0: float, risk_free_rate: float,
                                             kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps, nb_simuls=1,
                                             seed=seed)
         Y_list.append(Payoff(strike=strike, barrier=barrier, S=S_matrix[0]))
+        dYdX_list.append(DeltaFD(strike=strike, barrier=barrier, S0=S0, v0=v0, risk_free_rate=risk_free_rate,
+                                 maturity=maturity, rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps,
+                                 nb_simuls=1, seed=seed))
     return X_list, Y_list, dYdX_list
 
 

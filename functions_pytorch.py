@@ -135,8 +135,11 @@ def DeltaAAD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate
     price = MC_Pricing(strike=strike, barrier=barrier, S0=S0, v0=v0, risk_free_rate=risk_free_rate,
                        maturity=maturity, rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps,
                        nb_simuls=nb_simuls, seed=seed)
-    price.backward()
-    return S0.grad.clone()
+    if price.grad_fn:
+        price.backward()
+        return S0.grad.clone()
+    else:
+        return 0
 
 
 def GammaAAD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate: float, maturity: float, rho: float,
@@ -160,10 +163,14 @@ def GammaAAD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate
      - american D&O Call gamma (float)
     """
     S0.requires_grad = True
-    price = DeltaFD(strike=strike, barrier=barrier, S0=S0, v0=v0, risk_free_rate=risk_free_rate, maturity=maturity,
-                    rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps, nb_simuls=nb_simuls, seed=seed)
-    price.backward()
-    return S0.grad.clone()
+    delta = DeltaFD(strike=strike, barrier=barrier, S0=S0, v0=v0, risk_free_rate=risk_free_rate,
+                          maturity=maturity, rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps,
+                          nb_simuls=nb_simuls, seed=seed)
+    if delta.grad_fn:
+        delta.backward()
+        return S0.grad.clone()
+    else:
+        return 0
 
 
 def RhoAAD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate: float, maturity: float, rho: float,
@@ -190,8 +197,11 @@ def RhoAAD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate: 
     price = MC_Pricing(strike=strike, barrier=barrier, S0=S0, v0=v0, risk_free_rate=risk_free_rate,
                        maturity=maturity, rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps,
                        nb_simuls=nb_simuls, seed=seed)
-    price.backward()
-    return risk_free_rate.grad.clone() / 100
+    if price.grad_fn:
+        price.backward()
+        return risk_free_rate.grad.clone() / 100
+    else:
+        return 0
 
 
 def LSM_dataset(strike: float, barrier: float, v0: float, risk_free_rate: float, maturity: float, rho: float,
@@ -224,6 +234,9 @@ def LSM_dataset(strike: float, barrier: float, v0: float, risk_free_rate: float,
                                             kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps, nb_simuls=1,
                                             seed=seed)
         Y_list.append(Payoff(strike=strike, barrier=barrier, S=S_matrix[0]))
+        dYdX_list.append(DeltaAAD(strike=strike, barrier=barrier, S0=S0, v0=v0, risk_free_rate=risk_free_rate,
+                                  maturity=maturity, rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps,
+                                  nb_simuls=1, seed=seed))
     return X_list, Y_list, dYdX_list
 
 

@@ -1,3 +1,4 @@
+import os
 import matplotlib.pyplot as plt
 
 from functions_pytorch import *
@@ -45,7 +46,7 @@ print(f" - Payoff Price: {price}")
 delta = DeltaAAD(strike=strike, barrier=barrier, S0=S0.clone(), v0=v0.clone(), risk_free_rate=risk_free_rate.clone(),
                  maturity=maturity, rho=rho.clone(), kappa=kappa.clone(), theta=theta.clone(), sigma=sigma.clone(),
                  nb_steps=nb_steps, nb_simuls=nb_simuls, seed=seed)
-gamma = GammaAAD(strike=strike, barrier=barrier, S0=S0.clone(), v0=v0.clone(), risk_free_rate=risk_free_rate.clone(), 
+gamma = GammaAAD(strike=strike, barrier=barrier, S0=S0.clone(), v0=v0.clone(), risk_free_rate=risk_free_rate.clone(),
                  maturity=maturity, rho=rho.clone(), kappa=kappa.clone(), theta=theta.clone(), sigma=sigma.clone(), 
                  nb_steps=nb_steps, nb_simuls=nb_simuls, seed=seed)
 rho = RhoAAD(strike=strike, barrier=barrier, S0=S0.clone(), v0=v0.clone(), risk_free_rate=risk_free_rate.clone(), 
@@ -65,46 +66,43 @@ X, Y, dYdX = LSM_dataset(strike=strike, barrier=barrier, v0=v0.clone(), risk_fre
                          maturity=maturity, rho=rho.clone(), kappa=kappa.clone(), theta=theta.clone(),
                          sigma=sigma.clone(), nb_steps=nb_steps, nb_simuls=nb_simuls, seed=seed)
 
-"""
 # MC Dataset
 MC_prices = []
-AAD_deltas = []
-AAD_gammas = []
-AAD_rhos = []
-S0_list = torch.linspace(10, 200, 40)
+MC_deltas = []
+S0_list = torch.linspace(10, 200, 30)
 for S0 in S0_list:
     MC_prices.append(MC_Pricing(strike=strike, barrier=barrier, S0=S0.clone(), v0=v0.clone(),
                                 risk_free_rate=risk_free_rate.clone(), maturity=maturity, rho=rho.clone(),
                                 kappa=kappa.clone(), theta=theta.clone(), sigma=sigma.clone(), nb_steps=nb_steps,
                                 nb_simuls=nb_simuls, seed=seed))
-    AAD_deltas.append(DeltaAAD(strike=strike, barrier=barrier, S0=S0.clone(), v0=v0.clone(),
+    MC_deltas.append(DeltaAAD(strike=strike, barrier=barrier, S0=S0.clone(), v0=v0.clone(),
                                risk_free_rate=risk_free_rate.clone(), maturity=maturity, rho=rho.clone(),
                                kappa=kappa.clone(), theta=theta.clone(), sigma=sigma.clone(), nb_steps=nb_steps,
                                nb_simuls=nb_simuls, seed=seed))
-    AAD_gammas.append(GammaAAD(strike=strike, barrier=barrier, S0=S0.clone(), v0=v0.clone(),
-                               risk_free_rate=risk_free_rate.clone(), maturity=maturity, rho=rho.clone(),
-                               kappa=kappa.clone(), theta=theta.clone(), sigma=sigma.clone(), nb_steps=nb_steps,
-                               nb_simuls=nb_simuls, seed=seed))
-    AAD_rhos.append(RhoAAD(strike=strike, barrier=barrier, S0=S0.clone(), v0=v0.clone(),
-                           risk_free_rate=risk_free_rate.clone(), maturity=maturity, rho=rho.clone(),
-                           kappa=kappa.clone(), theta=theta.clone(), sigma=sigma.clone(), nb_steps=nb_steps,
-                           nb_simuls=nb_simuls, seed=seed))
 
 # Fig 1: Pricing Function
 fig1, ax1 = plt.subplots(figsize=(15, 7.5))
 ax1.scatter(X, Y, marker="+", color="grey", label='LSM samples')
 ax1.plot(S0_list, MC_prices, marker="o", color="green", label='MC pricing')
-ax1.set_title('Heston D&O Call Pricing Function')
+ax1.set_title(f'Heston D&O {barrier} Call {strike} - Pricing Function (Pytorch)')
+ax1.set_xlabel('X')
+ax1.set_ylabel('Y')
 ax1.legend()
 
-# Fig 2: AAD Greeks
+# Fig 2: Delta Function
 fig2, ax2 = plt.subplots(figsize=(15, 7.5))
-ax2.plot(S0_list, AAD_deltas, marker="o", label='Delta')
-ax2.plot(S0_list, AAD_gammas, marker="o", label='Gamma')
-ax2.plot(S0_list, AAD_rhos, marker="o", label='Rho')
-ax2.set_title('AAD Greeks')
+ax2.scatter(X, dYdX, marker="+", color="grey", label='LSM samples')
+ax2.plot(S0_list, MC_deltas, marker="o", color="green", label='MC pricing')
+ax2.set_title(f'Heston D&O {barrier} Call {strike} - Delta Function (Pytorch)')
+ax2.set_xlabel('X')
+ax2.set_ylabel('dYdX')
 ax2.legend()
+
+# Save Figures
+if not os.path.exists('results'):
+    os.makedirs('results')
+fig1.savefig("results/pricing_function_pytorch.png")
+fig2.savefig("results/delta_function_pytorch.png")
 
 # Show Graphs
 plt.show()
-"""
