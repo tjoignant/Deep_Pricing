@@ -204,6 +204,38 @@ def RhoAAD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate: 
         return 0
 
 
+def VegaAAD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate: float, maturity: float, rho: float,
+            kappa: float, theta: float, sigma: float, nb_steps=252, nb_simuls=100000, seed=1):
+    """
+    Inputs:
+     - strike         : american D&O Call strike (float)
+     - barrier        : american D&O Call barrier (float)
+     - S0, v0         : initial asset spot and variance (float)
+     - risk_free_rate : yearly asset continuous drift (float)
+     - maturity       : yearly duration of simulation (float)
+     - rho            : correlation between asset returns and variance (float)
+     - kappa          : rate of mean reversion in variance process (float)
+     - theta          : long-term mean of variance process (float)
+     - sigma          : vol of vol / volatility of variance process (float)
+     - nb_steps       : number of time steps (int)
+     - nb_simuls      : number of simulations (int)
+     - seed           : random seed (int)
+     - dS0            : S0 differential
+    Outputs:
+     - american D&O Call vega (float)
+    """
+    v0.requires_grad = True
+    theta.requires_grad = True
+    price = MC_Pricing(strike=strike, barrier=barrier, S0=S0, v0=v0, risk_free_rate=risk_free_rate,
+                       maturity=maturity, rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps,
+                       nb_simuls=nb_simuls, seed=seed)
+    if price.grad_fn:
+        price.backward()
+        return (v0.grad.clone() * 2 * torch.sqrt(v0) + theta.grad.clone() * 2 * torch.sqrt(theta)) / 100
+    else:
+        return 0
+
+
 def LSM_dataset(strike: float, barrier: float, v0: float, risk_free_rate: float, maturity: float, rho: float,
                kappa: float, theta: float, sigma: float, nb_steps=252, nb_simuls=100000, seed=1):
     """

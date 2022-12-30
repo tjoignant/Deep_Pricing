@@ -47,10 +47,13 @@ gamma = GammaFD(strike=strike, barrier=barrier, S0=S0, v0=v0, risk_free_rate=ris
                 rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps, nb_simuls=nb_simuls, seed=seed)
 rho = RhoFD(strike=strike, barrier=barrier, S0=S0, v0=v0, risk_free_rate=risk_free_rate, maturity=maturity,
             rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps, nb_simuls=nb_simuls, seed=seed)
+vega = VegaFD(strike=strike, barrier=barrier, S0=S0, v0=v0, risk_free_rate=risk_free_rate, maturity=maturity,
+            rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps, nb_simuls=nb_simuls, seed=seed)
 print("\nFD Greeks")
 print(f" - Delta: {delta}")
 print(f" - Gamma: {gamma}")
 print(f" - Rho: {rho}")
+print(f" - Vega: {vega}")
 
 
 # -------------------------------------------------------------------------------------------------------------------- #

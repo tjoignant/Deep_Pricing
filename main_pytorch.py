@@ -52,10 +52,14 @@ gamma = GammaAAD(strike=strike, barrier=barrier, S0=S0.clone(), v0=v0.clone(), r
 rho = RhoAAD(strike=strike, barrier=barrier, S0=S0.clone(), v0=v0.clone(), risk_free_rate=risk_free_rate.clone(), 
              maturity=maturity, rho=rho.clone(), kappa=kappa.clone(), theta=theta.clone(), sigma=sigma.clone(), 
              nb_steps=nb_steps, nb_simuls=nb_simuls, seed=seed)
+vega = VegaAAD(strike=strike, barrier=barrier, S0=S0.clone(), v0=v0.clone(), risk_free_rate=risk_free_rate.clone(),
+               maturity=maturity, rho=rho.clone(), kappa=kappa.clone(), theta=theta.clone(), sigma=sigma.clone(),
+               nb_steps=nb_steps, nb_simuls=nb_simuls, seed=seed)
 print("\nADD Greeks")
 print(f" - Delta: {delta}")
 print(f" - Gamma: {gamma}")
 print(f" - Rho: {rho}")
+print(f" - Vega: {vega}")
 
 
 # -------------------------------------------------------------------------------------------------------------------- #

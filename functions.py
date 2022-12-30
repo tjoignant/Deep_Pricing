@@ -170,6 +170,44 @@ def RhoFD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate: f
     return (price_up - price_down) / (2 * dr) / 100
 
 
+def VegaFD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate: float, maturity: float, rho: float,
+           kappa: float, theta: float, sigma: float, nb_steps=252, nb_simuls=100000, seed=1):
+    """
+    Inputs:
+     - strike         : american D&O Call strike (float)
+     - barrier        : american D&O Call barrier (float)
+     - S0, v0         : initial asset spot and variance (float)
+     - risk_free_rate : yearly asset continuous drift (float)
+     - maturity       : yearly duration of simulation (float)
+     - rho            : correlation between asset returns and variance (float)
+     - kappa          : rate of mean reversion in variance process (float)
+     - theta          : long-term mean of variance process (float)
+     - sigma          : vol of vol / volatility of variance process (float)
+     - nb_steps       : number of time steps (int)
+     - nb_simuls      : number of simulations (int)
+     - seed           : random seed (int)
+     - dr             : risk_free_rate differential
+    Outputs:
+     - american D&O Call rho (float)
+    """
+    dv = 0.005
+    price_v0_up = MC_Pricing(strike=strike, barrier=barrier, S0=S0, v0=v0+dv, risk_free_rate=risk_free_rate,
+                          maturity=maturity, rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps,
+                          nb_simuls=nb_simuls, seed=seed)
+    price_v0_down = MC_Pricing(strike=strike, barrier=barrier, S0=S0, v0=v0-dv, risk_free_rate=risk_free_rate,
+                          maturity=maturity, rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps,
+                          nb_simuls=nb_simuls, seed=seed)
+    price_theta_up = MC_Pricing(strike=strike, barrier=barrier, S0=S0, v0=v0, risk_free_rate=risk_free_rate,
+                          maturity=maturity, rho=rho, kappa=kappa, theta=theta+dv, sigma=sigma, nb_steps=nb_steps,
+                          nb_simuls=nb_simuls, seed=seed)
+    price_theta_down = MC_Pricing(strike=strike, barrier=barrier, S0=S0, v0=v0, risk_free_rate=risk_free_rate,
+                          maturity=maturity, rho=rho, kappa=kappa, theta=theta-dv, sigma=sigma, nb_steps=nb_steps,
+                          nb_simuls=nb_simuls, seed=seed)
+    vega_v0 = (price_v0_up - price_v0_down) / (2 * dv) * 2 * np.sqrt(v0)
+    vega_theta = (price_theta_up - price_theta_down) / (2 * dv) * 2 * np.sqrt(theta)
+    return (vega_v0 + vega_theta) / 100
+
+
 def StandardError(nb_simuls : int ,payoffvec):
     """
     Inputs:
