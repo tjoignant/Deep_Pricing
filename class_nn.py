@@ -2,7 +2,7 @@ import torch.nn as nn
 
 
 class Twin_Network(nn.Module):
-    def __init__(self, nb_inputs, nb_hidden_layer=4, nb_neurones=20):
+    def __init__(self, nb_inputs, nb_hidden_layer, nb_neurones):
         super().__init__()
         # Layers Initialization
         self.layers = []
@@ -32,6 +32,13 @@ class Twin_Network(nn.Module):
                 x = nn.ReLU(layer(x))
         return x
 
+    def predict_price(self, X, X_mean, X_std, Y_mean, Y_std):
+        X_norm = (X - X_mean) / X_std
+        Y_norm = self.forward(X_norm)
+        Y = Y_norm * Y_std + Y_mean
+        return Y
 
-twin_network = Twin_Network(20)
-print(twin_network)
+
+if __name__ == '__main__':
+    twin_network = Twin_Network(nb_inputs=20, nb_hidden_layer=4, nb_neurones=20)
+    print(twin_network.nb)
