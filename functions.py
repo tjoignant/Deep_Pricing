@@ -271,14 +271,14 @@ def normalize_data(X: list, Y: list, dYdX: list):
      - normalized pathwise differentials (1D array)
      - differential weights of the cost function (float)
     """
-    mean_X = np.mean(X)
-    std_X = np.std(X)
-    norm_X = (X - mean_X) / std_X
-    mean_Y = np.mean(Y)
-    std_Y = np.std(Y)
-    norm_Y = (Y - mean_Y) / std_Y
-    mean_dYdX = np.mean(dYdX)
-    std_dYdX = np.std(dYdX)
-    norm_dYdX = (dYdX - mean_dYdX) / std_dYdX
-    lambda_j = 1 / np.sqrt((1/len(dYdX)) * sum(np.power(norm_dYdX, 2)))
-    return mean_X, std_X, norm_X, mean_Y, std_Y, norm_Y, norm_dYdX, lambda_j
+    X_mean = np.mean(X)
+    X_std = np.std(X)
+    X_norm = (X - X_mean) / X_std
+    Y_mean = np.mean(Y)
+    Y_std = np.std(Y)
+    Y_norm = (Y - Y_mean) / Y_std
+    dYdX_mean = np.mean(dYdX)
+    dYdX_std = np.std(dYdX)
+    dYdX_norm = (dYdX - dYdX_mean) / dYdX_std
+    lambda_j = 1 / np.sqrt((1/len(dYdX)) * np.sum(np.power(dYdX_norm, 2)))
+    return X_mean, X_std, X_norm, Y_mean, Y_std, Y_norm, dYdX_norm, lambda_j
