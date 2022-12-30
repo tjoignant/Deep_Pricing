@@ -1,9 +1,10 @@
+import torch
 import torch.nn as nn
 
 
 class Twin_Network(nn.Module):
     def __init__(self, nb_inputs, nb_hidden_layer, nb_neurones):
-        super().__init__()
+        super(Twin_Network, self).__init__()
         # Layers Initialization
         self.layers = []
         for i in range(0, nb_hidden_layer + 1):
@@ -38,7 +39,18 @@ class Twin_Network(nn.Module):
         Y = Y_norm * Y_std + Y_mean
         return Y
 
+    def predict_price_and_diffs(self, X, X_mean, X_std, Y_mean, Y_std,  dYdX_mean, dYdX_std):
+        X_norm = (X - X_mean) / X_std
+        Y_norm = self.forward(X_norm)
+        Y = Y_norm * Y_std + Y_mean
+        torch.autograd.grad(Y, X, retain_graph=True)
+        Y.backward()
+        dYdX_norm = X.grad
+        dYdX = dYdX_norm * dYdX_std + dYdX_mean
+        return Y, dYdX
+
 
 if __name__ == '__main__':
+    torch.manual_seed(123)
     twin_network = Twin_Network(nb_inputs=20, nb_hidden_layer=4, nb_neurones=20)
-    print(twin_network.nb)
+    print(twin_network)
