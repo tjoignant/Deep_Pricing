@@ -258,7 +258,7 @@ def HestonLSM(strike: float, barrier: float, v0: float, risk_free_rate: float, m
      - pathwise differentials (1D array)
     """
     seed_list = np.arange(seed, nb_simuls + seed)
-    X_list = torch.linspace(10, 200, nb_simuls)
+    X_list = torch.linspace(10, 200, nb_simuls, dtype=torch.float64)
     Y_list = []
     dYdX_list = []
     for S0, seed in zip(X_list, seed_list):

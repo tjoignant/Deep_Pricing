@@ -5,12 +5,12 @@ import torch.optim as optim
 
 class Twin_Network(nn.Module):
     def __init__(self, nb_inputs, nb_hidden_layer, nb_neurones, seed=1):
+        super().__init__()
         torch.manual_seed(seed)
-        super(Twin_Network, self).__init__()
         self.nb_inputs = nb_inputs
         self.nb_hidden_layer = nb_hidden_layer
         self.nb_neurones = nb_neurones
-        self.layers = []
+        self.layers = nn.ModuleList()
         self.cost_values = []
         self._init_layers()
 
@@ -48,7 +48,7 @@ class Twin_Network(nn.Module):
         Y = Y_norm * Y_std + Y_mean
         return Y
 
-    def predict_price_and_diffs(self, X, X_mean, X_std, Y_mean, Y_std,  dYdX_mean, dYdX_std):
+    def predict_price_and_diffs(self, X, X_mean, X_std, Y_mean, Y_std, dYdX_mean, dYdX_std):
         # Forward Propagation
         X_norm = (X - X_mean) / X_std
         Y_norm = self.forward(X_norm)
@@ -60,21 +60,21 @@ class Twin_Network(nn.Module):
         dYdX = dYdX_norm * dYdX_std + dYdX_mean
         return Y, dYdX
 
-    def training(self, X_norm, Y_norm, lambda_j, nb_epochs, dYdX_norm=None):
-        # Initialization Variables
-        loss = None
-        # If Training on Samples & Differentials
-        if dYdX_norm:
-            alpha = 1 / (1 + self.nb_inputs)
-        # Cost Function
-        criterion = self.MSELoss()
-        # Optimizer
-        optimizer = optim.Adam(params=self.parameters(), lr=0.1)
-        # Optimization Loop
-        for _ in range(0, nb_epochs):
-            optimizer.zero_grad()
-            loss = criterion(self.forward(X_norm), Y_norm)
-            loss.backward()
-            optimizer.step()
-        # Store Cost Value
-        self.cost_values.append(loss.item())
+
+def training(model, X_norm, Y_norm, nb_epochs, dYdX_norm=None, lambda_j=None):
+    # Variables Initialization
+    loss = None
+    if dYdX_norm:
+        alpha = 1 / (1 + model.nb_inputs)
+    # Cost Function
+    criterion = nn.MSELoss()
+    # Optimizer
+    optimizer = optim.Adam(params=model.parameters(), lr=0.1)
+    # Optimization Loop
+    for _ in range(0, nb_epochs):
+        optimizer.zero_grad()
+        loss = criterion(model.predict_price(X_norm), Y_norm)
+        loss.backward()
+        optimizer.step()
+    # Store Cost Value
+    model.cost_values.append(loss.item())

@@ -1,7 +1,7 @@
 import torch
 import matplotlib.pyplot as plt
 
-from nn_class import Twin_Network
+from nn_class import Twin_Network, training
 from deep_learning_functions import HestonLSM, normalize_data
 
 # Down & Out Call Option Parameters
@@ -38,7 +38,7 @@ X_mean, X_std, X_norm, Y_mean, Y_std, Y_norm, dYdX_norm, lambda_j = normalize_da
 
 # Classic Neural Network
 classic_nn = Twin_Network(nb_inputs=nb_simuls, nb_hidden_layer=nb_hidden_layers, nb_neurones=nb_neurones, seed=seed)
-classic_nn.training(X_norm=X_norm, Y_norm=Y_norm, lambda_j=lambda_j, nb_epochs=nb_epochs)
+classic_nn = training(model=classic_nn, X_norm=X_norm, Y_norm=Y_norm, nb_epochs=nb_epochs)
 
 # Differential Neural Network
 
