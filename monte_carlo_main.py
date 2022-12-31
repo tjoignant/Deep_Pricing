@@ -60,9 +60,9 @@ print(f" - Vega: {vega}")
 # PART 2: Pricing and hedging by differential deep learning
 
 # LSM Dataset
-X, Y, dYdX = LSM_dataset(strike=strike, barrier=barrier, v0=v0, risk_free_rate=risk_free_rate, maturity=maturity,
-                         rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps, nb_simuls=nb_simuls,
-                         seed=seed)
+X, Y, dYdX = HestonLSM(strike=strike, barrier=barrier, v0=v0, risk_free_rate=risk_free_rate, maturity=maturity,
+                       rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps, nb_simuls=nb_simuls,
+                       seed=seed)
 
 # MC Dataset
 MC_prices = []

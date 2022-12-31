@@ -219,8 +219,8 @@ def StandardError(nb_simuls : int ,payoffvec):
     return [np.mean(payoffvec)+1.96*np.std(payoffvec)/np.sqrt(nb_simuls),np.mean(payoffvec)-1.96*np.std(payoffvec)/np.sqrt(nb_simuls)]
 
 
-def LSM_dataset(strike: float, barrier: float, v0: float, risk_free_rate: float, maturity: float, rho: float,
-               kappa: float, theta: float, sigma: float, nb_steps=252, nb_simuls=100000, seed=1):
+def HestonLSM(strike: float, barrier: float, v0: float, risk_free_rate: float, maturity: float, rho: float,
+              kappa: float, theta: float, sigma: float, nb_steps=252, nb_simuls=100000, seed=1):
     """
     Inputs:
      - strike         : american D&O Call strike (float)

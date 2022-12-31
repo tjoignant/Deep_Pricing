@@ -237,7 +237,7 @@ def VegaAAD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate:
 
 
 def HestonLSM(strike: float, barrier: float, v0: float, risk_free_rate: float, maturity: float, rho: float,
-               kappa: float, theta: float, sigma: float, nb_steps=252, nb_simuls=100000, seed=1):
+              kappa: float, theta: float, sigma: float, nb_steps=252, nb_simuls=100000, seed=1):
     """
     Inputs:
      - strike         : american D&O Call strike (float)
