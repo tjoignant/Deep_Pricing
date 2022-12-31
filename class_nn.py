@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.optim as optim
 
 
 class Twin_Network(nn.Module):
@@ -39,31 +40,47 @@ class Twin_Network(nn.Module):
         return x
 
     def predict_price(self, X, X_mean, X_std, Y_mean, Y_std):
+        # Forward Propagation
         X_norm = (X - X_mean) / X_std
         Y_norm = self.forward(X_norm)
         Y = Y_norm * Y_std + Y_mean
         return Y
 
     def predict_price_and_diffs(self, X, X_mean, X_std, Y_mean, Y_std,  dYdX_mean, dYdX_std):
+        # Forward Propagation
         X_norm = (X - X_mean) / X_std
         Y_norm = self.forward(X_norm)
         Y = Y_norm * Y_std + Y_mean
+        # Backward Propagation
         torch.autograd.grad(Y, X, retain_graph=True)
         Y.backward()
         dYdX_norm = X.grad
         dYdX = dYdX_norm * dYdX_std + dYdX_mean
         return Y, dYdX
 
-    def training(self, X_norm, Y_norm, lambda_j, nb_epochs, dYdX_norm=None):
-        # Case 1 : Training on Samples & Differentials
-        if dYdX_norm:
-            return None
-        # Case 2 : Training on Samples
-        else:
-            return None
+
+def training(model, X_norm, Y_norm, lambda_j, nb_epochs, dYdX_norm=None):
+    # Initialization Variables
+    loss = None
+    loss_values = []
+    # If Training on Samples & Differentials
+    if dYdX_norm:
+        alpha = 1 / (1 + model.nb_inputs)
+    # Cost Function
+    criterion = model.MSELoss()
+    # Optimizer
+    optimizer = optim.Adam(params=model.parameters(), lr=0.1)
+    # Optimization Loop
+    for _ in range(0, nb_epochs):
+        optimizer.zero_grad()
+        loss = criterion(model.forward(X_norm), Y_norm)
+        loss.backward()
+        optimizer.step()
+    # Store Loss Value
+    loss_values.append(loss.item())
 
 
 if __name__ == '__main__':
     torch.manual_seed(123)
-    twin_network = Twin_Network(nb_inputs=20, nb_hidden_layer=4, nb_neurones=20)
-    print(twin_network.nb_inputs)
+    model = Twin_Network(nb_inputs=20, nb_hidden_layer=4, nb_neurones=20)
+    print(model.nb_inputs)
