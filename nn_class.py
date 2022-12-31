@@ -73,7 +73,7 @@ def training(model, X_norm, Y_norm, nb_epochs, dYdX_norm=None, lambda_j=None):
     # Optimization Loop
     for _ in range(0, nb_epochs):
         optimizer.zero_grad()
-        loss = criterion(model.predict_price(X_norm), Y_norm)
+        loss = criterion(model.forward(X_norm), Y_norm)
         loss.backward()
         optimizer.step()
     # Store Cost Value
