@@ -1,7 +1,7 @@
 import os
 import matplotlib.pyplot as plt
 
-from functions_pytorch import *
+from deep_learning_functions import *
 
 # Down & Out Call Option Parameters
 strike = 100

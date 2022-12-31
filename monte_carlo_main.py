@@ -1,7 +1,7 @@
 import os
 import matplotlib.pyplot as plt
 
-from functions import *
+from monte_carlo_functions import *
 
 # Down & Out Call Option Parameters
 strike = 100

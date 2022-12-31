@@ -79,8 +79,3 @@ def training(model, X_norm, Y_norm, lambda_j, nb_epochs, dYdX_norm=None):
         optimizer.step()
     # Store Loss Value
     loss_values.append(loss.item())
-
-
-if __name__ == '__main__':
-    model = Twin_Network(nb_inputs=20, nb_hidden_layer=4, nb_neurones=20, seed=123)
-    print(model.nb_inputs)
