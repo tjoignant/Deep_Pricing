@@ -11,6 +11,7 @@ class Twin_Network(nn.Module):
         self.nb_hidden_layer = nb_hidden_layer
         self.nb_neurones = nb_neurones
         self.layers = []
+        self.cost_values = []
         self._init_layers()
 
     def _init_layers(self):
@@ -59,23 +60,21 @@ class Twin_Network(nn.Module):
         dYdX = dYdX_norm * dYdX_std + dYdX_mean
         return Y, dYdX
 
-
-def training(model, X_norm, Y_norm, lambda_j, nb_epochs, dYdX_norm=None):
-    # Initialization Variables
-    loss = None
-    loss_values = []
-    # If Training on Samples & Differentials
-    if dYdX_norm:
-        alpha = 1 / (1 + model.nb_inputs)
-    # Cost Function
-    criterion = model.MSELoss()
-    # Optimizer
-    optimizer = optim.Adam(params=model.parameters(), lr=0.1)
-    # Optimization Loop
-    for _ in range(0, nb_epochs):
-        optimizer.zero_grad()
-        loss = criterion(model.forward(X_norm), Y_norm)
-        loss.backward()
-        optimizer.step()
-    # Store Loss Value
-    loss_values.append(loss.item())
+    def training(self, X_norm, Y_norm, lambda_j, nb_epochs, dYdX_norm=None):
+        # Initialization Variables
+        loss = None
+        # If Training on Samples & Differentials
+        if dYdX_norm:
+            alpha = 1 / (1 + self.nb_inputs)
+        # Cost Function
+        criterion = self.MSELoss()
+        # Optimizer
+        optimizer = optim.Adam(params=self.parameters(), lr=0.1)
+        # Optimization Loop
+        for _ in range(0, nb_epochs):
+            optimizer.zero_grad()
+            loss = criterion(self.forward(X_norm), Y_norm)
+            loss.backward()
+            optimizer.step()
+        # Store Cost Value
+        self.cost_values.append(loss.item())

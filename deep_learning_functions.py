@@ -269,7 +269,7 @@ def HestonLSM(strike: float, barrier: float, v0: float, risk_free_rate: float, m
         dYdX_list.append(DeltaAAD(strike=strike, barrier=barrier, S0=S0, v0=v0, risk_free_rate=risk_free_rate,
                                   maturity=maturity, rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps,
                                   nb_simuls=1, seed=seed))
-    return X_list, Y_list, dYdX_list
+    return X_list, torch.tensor(Y_list), torch.tensor(dYdX_list)
 
 
 def normalize_data(X: list, Y: list, dYdX: list):
@@ -290,12 +290,12 @@ def normalize_data(X: list, Y: list, dYdX: list):
     """
     X_mean = torch.mean(X)
     X_std = torch.std(X)
-    X_norm = (X - X_mean) / X_std
+    X_norm = torch.div(X - X_mean, X_std)
     Y_mean = torch.mean(Y)
     Y_std = torch.std(Y)
     Y_norm = (Y - Y_mean) / Y_std
     dYdX_mean = torch.mean(dYdX)
     dYdX_std = torch.std(dYdX)
-    dYdX_norm = (dYdX - dYdX_mean) / dYdX_std
+    dYdX_norm = torch.div(dYdX - dYdX_mean, dYdX_std)
     lambda_j = 1 / torch.sqrt((1/len(dYdX)) * torch.sum(dYdX_norm * dYdX_norm))
     return X_mean, X_std, X_norm, Y_mean, Y_std, Y_norm, dYdX_norm, lambda_j
