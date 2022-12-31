@@ -4,7 +4,8 @@ import torch.optim as optim
 
 
 class Twin_Network(nn.Module):
-    def __init__(self, nb_inputs, nb_hidden_layer, nb_neurones):
+    def __init__(self, nb_inputs, nb_hidden_layer, nb_neurones, seed=1):
+        torch.manual_seed(seed)
         super(Twin_Network, self).__init__()
         self.nb_inputs = nb_inputs
         self.nb_hidden_layer = nb_hidden_layer
@@ -81,6 +82,5 @@ def training(model, X_norm, Y_norm, lambda_j, nb_epochs, dYdX_norm=None):
 
 
 if __name__ == '__main__':
-    torch.manual_seed(123)
-    model = Twin_Network(nb_inputs=20, nb_hidden_layer=4, nb_neurones=20)
+    model = Twin_Network(nb_inputs=20, nb_hidden_layer=4, nb_neurones=20, seed=123)
     print(model.nb_inputs)
