@@ -34,7 +34,7 @@ def GeneratePathsHestonEuler(S0: float, v0: float, risk_free_rate: float, maturi
         v_it = torch.maximum(v_it + kappa * (theta - v_it) * dt + sigma * torch.sqrt(v_it * dt) * rdn[:, 1], torch.tensor(0))
         S = torch.cat((S, S_it), 0)
     S = S.view(nb_steps + 1, nb_simuls)
-    return S.T
+    return S.T.to(dtype=torch.float32)
 
 
 def Payoff(strike: float, barrier: float, S: np.array):
@@ -46,10 +46,10 @@ def Payoff(strike: float, barrier: float, S: np.array):
     Outputs:
      - american D&O Call payoff (float)
     """
-    if min(S) <= barrier:
-        payoff = 0
+    if torch.min(S) <= barrier:
+        payoff = torch.tensor(0)
     else:
-        payoff = max(0, S[-1] - strike)
+        payoff = torch.maximum(torch.tensor(0), S[-1] - strike)
     return payoff    
 
 
@@ -258,7 +258,7 @@ def HestonLSM(strike: float, barrier: float, v0: float, risk_free_rate: float, m
      - pathwise differentials (1D array)
     """
     seed_list = np.arange(seed, nb_simuls + seed)
-    X_list = torch.linspace(10, 200, nb_simuls, dtype=torch.float64)
+    X_list = torch.linspace(10, 200, nb_simuls)
     Y_list = []
     dYdX_list = []
     for S0, seed in zip(X_list, seed_list):

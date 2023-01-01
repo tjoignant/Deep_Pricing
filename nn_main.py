@@ -37,16 +37,18 @@ X, Y, dYdX = HestonLSM(strike=strike, barrier=barrier, v0=v0.clone(), risk_free_
 X_mean, X_std, X_norm, Y_mean, Y_std, Y_norm, dYdX_norm, lambda_j = normalize_data(X, Y, dYdX)
 
 # Classic Neural Network
-classic_nn = Twin_Network(nb_inputs=nb_simuls, nb_hidden_layer=nb_hidden_layers, nb_neurones=nb_neurones, seed=seed)
+classic_nn = Twin_Network(nb_inputs=1, nb_hidden_layer=nb_hidden_layers, nb_neurones=nb_neurones, seed=seed)
 classic_nn = training(model=classic_nn, X_norm=X_norm, Y_norm=Y_norm, nb_epochs=nb_epochs)
 
 # Differential Neural Network
 
 # Plot Cost Values
-plt.plot(x=range(1, nb_epochs+1), y=classic_nn.cost_values, label="Classic")
+plt.plot(range(1, nb_epochs+1), classic_nn.cost_values, label="Classic")
 plt.xlabel("Nb of epochs")
 plt.ylabel("Cost value")
 plt.title("Training Results")
+plt.legend()
+plt.grid()
 
 # Show Graphs
 plt.show()
