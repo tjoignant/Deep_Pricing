@@ -46,9 +46,10 @@ classic_nn = training(model=classic_nn, X_norm=X_norm, Y_norm=Y_norm, nb_epochs=
 plt.plot(range(1, nb_epochs+1), classic_nn.cost_values, label="Classic")
 plt.xlabel("Nb of epochs")
 plt.ylabel("Cost value")
-plt.title("Training Results")
+plt.title("NN Training")
 plt.legend()
 plt.grid()
+plt.savefig("results/nn_training.png")
 
 # Show Graphs
 plt.show()
