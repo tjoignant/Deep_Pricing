@@ -47,18 +47,18 @@ class Twin_Network(nn.Module):
 
     def predict_price(self, X, X_mean, X_std, Y_mean, Y_std):
         # Forward Propagation
-        X_norm = (X - X_mean) / X_std
+        X_norm = torch.div(torch.tensor(X) - X_mean, X_std)
         Y_norm = self.forward(X_norm)
         Y = Y_norm * Y_std + Y_mean
         return Y
 
     def predict_price_and_diffs(self, X, X_mean, X_std, Y_mean, Y_std, dYdX_mean, dYdX_std):
         # Forward Propagation
-        X_norm = (X - X_mean) / X_std
+        X_norm = torch.div(torch.tensor(X) - X_mean, X_std)
         Y_norm = self.forward(X_norm)
         Y = Y_norm * Y_std + Y_mean
         # Backward Propagation
-        torch.autograd.grad(Y, X, retain_graph=True)
+        torch.autograd.grad(Y, torch.tensor(X), retain_graph=True)
         Y.backward()
         dYdX_norm = X.grad
         dYdX = dYdX_norm * dYdX_std + dYdX_mean
