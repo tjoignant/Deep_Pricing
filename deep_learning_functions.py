@@ -34,7 +34,7 @@ def GeneratePathsHestonEuler(S0: float, v0: float, risk_free_rate: float, maturi
         v_it = torch.maximum(v_it + kappa * (theta - v_it) * dt + sigma * torch.sqrt(v_it * dt) * rdn[:, 1], torch.tensor(0))
         S = torch.cat((S, S_it), 0)
     S = S.view(nb_steps + 1, nb_simuls)
-    return S.T.to(dtype=torch.float32)
+    return S.T
 
 
 def Payoff(strike: float, barrier: float, S: np.array):
@@ -293,7 +293,7 @@ def normalize_data(X: list, Y: list, dYdX: list):
     X_norm = torch.div(X - X_mean, X_std)
     Y_mean = torch.mean(Y)
     Y_std = torch.std(Y)
-    Y_norm = (Y - Y_mean) / Y_std
+    Y_norm = torch.div(Y - Y_mean, Y_std)
     dYdX_mean = torch.mean(dYdX)
     dYdX_std = torch.std(dYdX)
     dYdX_norm = torch.div(dYdX - dYdX_mean, dYdX_std)

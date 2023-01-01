@@ -47,45 +47,63 @@ class Twin_Network(nn.Module):
 
     def predict_price(self, X, X_mean, X_std, Y_mean, Y_std):
         # Forward Propagation
-        X_norm = torch.div(torch.tensor(X) - X_mean, X_std)
+        X_norm = torch.div(torch.tensor([X]) - X_mean, X_std)
         Y_norm = self.forward(X_norm)
         Y = Y_norm * Y_std + Y_mean
         return Y
 
     def predict_price_and_diffs(self, X, X_mean, X_std, Y_mean, Y_std, dYdX_mean, dYdX_std):
         # Forward Propagation
-        X_norm = torch.div(torch.tensor(X) - X_mean, X_std)
+        X_norm = torch.div(torch.tensor([X]) - X_mean, X_std)
         Y_norm = self.forward(X_norm)
         Y = Y_norm * Y_std + Y_mean
         # Backward Propagation
-        torch.autograd.grad(Y, torch.tensor(X), retain_graph=True)
+        torch.autograd.grad(Y, torch.tensor([X]), retain_graph=True)
         Y.backward()
         dYdX_norm = X.grad
         dYdX = dYdX_norm * dYdX_std + dYdX_mean
         return Y, dYdX
 
 
+def MSE_standard(model, X_norm, Y_norm):
+    loss = torch.tensor(0.0)
+    for x, y in zip(X_norm, Y_norm):
+        x = torch.tensor([x])
+        y_pred = model(x)[0]
+        loss += torch.div(torch.square(y_pred - y), len(X_norm))
+    return loss
+
+
+def MSE_differential(model, X_norm, Y_norm, dYdX_norm, lambda_j, alpha):
+    loss = alpha * MSE_standard(model, X_norm, Y_norm)
+    if alpha != 1:
+        for x, z in zip(X_norm, dYdX_norm):
+            x = torch.tensor([x], requires_grad=True)
+            y_pred = model(x)
+            y_pred.backward()
+            z_pred = x.grad.clone()[0]
+            loss += torch.div(torch.square(z_pred - z), len(X_norm)) * lambda_j * (1 - alpha)
+    return loss
+
+
 def training(model, X_norm, Y_norm, nb_epochs, dYdX_norm=None, lambda_j=None):
-    # Variables Initialization
-    loss = None
-    if dYdX_norm:
+    # Cost Function
+    if dYdX_norm is None:
+        alpha = 1
+    else:
         alpha = 1 / (1 + model.nb_inputs)
     # Cost Function
-    criterion = nn.MSELoss()
+    criterion = MSE_differential
     # Optimizer
     optimizer = optim.Adam(params=model.parameters(), lr=0.1)
     # Optimization Loop
     for i in range(0, nb_epochs):
-        cost_value = 0
-        for x, y in zip(X_norm, Y_norm):
-            # Forward + Loss
-            optimizer.zero_grad()
-            loss = criterion(model(torch.tensor([x])), torch.tensor([y]))
-            # Update Weights
-            loss.backward()
-            optimizer.step()
-            # Update Cost
-            cost_value += loss.item()
+        optimizer.zero_grad()
+        loss = criterion(model, X_norm, Y_norm, dYdX_norm, lambda_j, alpha)
+        # Update Weights
+        loss.backward()
+        optimizer.step()
         # Store Cost Value
-        model.cost_values.append(cost_value)
+        model.cost_values.append(loss.item())
+        print(i+1, " - ", loss.item())
     return model

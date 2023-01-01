@@ -41,9 +41,13 @@ classic_nn = Twin_Network(nb_inputs=1, nb_hidden_layer=nb_hidden_layers, nb_neur
 classic_nn = training(model=classic_nn, X_norm=X_norm, Y_norm=Y_norm, nb_epochs=nb_epochs)
 
 # Differential Neural Network
+differential_nn = Twin_Network(nb_inputs=1, nb_hidden_layer=nb_hidden_layers, nb_neurones=nb_neurones, seed=seed)
+differential_nn = training(model=differential_nn, X_norm=X_norm, Y_norm=Y_norm, nb_epochs=nb_epochs,
+                           dYdX_norm=dYdX_norm, lambda_j=lambda_j)
 
 # Plot Cost Values
 plt.plot(range(1, nb_epochs+1), classic_nn.cost_values, label="Classic")
+plt.plot(range(1, nb_epochs+1), differential_nn.cost_values, label="Differential")
 plt.xlabel("Nb of epochs")
 plt.ylabel("Cost value")
 plt.title("NN Training")
