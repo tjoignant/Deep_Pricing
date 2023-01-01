@@ -87,6 +87,5 @@ def training(model, X_norm, Y_norm, nb_epochs, dYdX_norm=None, lambda_j=None):
             # Update Cost
             cost_value += loss.item() / len(X_norm)
         # Store Cost Value
-        print(f"Epoch {i}: {cost_value}")
         model.cost_values.append(cost_value)
     return model
