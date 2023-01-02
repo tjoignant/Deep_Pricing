@@ -1,6 +1,7 @@
 import torch
 import numpy as np
 
+from monte_carlo_functions import DeltaFD
 
 def GeneratePathsHestonEuler(S0: float, v0: float, risk_free_rate: float, maturity: float, rho: float, kappa: float,
                              theta: float, sigma: float, nb_steps=252, nb_simuls=100000, seed=1):
@@ -80,36 +81,6 @@ def MC_Pricing(strike: float, barrier: float, S0: float, v0: float, risk_free_ra
     for S in S_matrix:
         payoffs_sum = payoffs_sum + Payoff(strike=strike, barrier=barrier, S=S)
     return torch.exp(-risk_free_rate * maturity) * (payoffs_sum / len(S_matrix))
-
-
-def DeltaFD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate: float, maturity: float, rho: float,
-            kappa: float, theta: float, sigma: float, nb_steps=252, nb_simuls=100000, seed=1):
-    """
-    Inputs:
-     - strike         : american D&O Call strike (float)
-     - barrier        : american D&O Call barrier (float)
-     - S0, v0         : initial asset spot and variance (float)
-     - risk_free_rate : yearly asset continuous drift (float)
-     - maturity       : yearly duration of simulation (float)
-     - rho            : correlation between asset returns and variance (float)
-     - kappa          : rate of mean reversion in variance process (float)
-     - theta          : long-term mean of variance process (float)
-     - sigma          : vol of vol / volatility of variance process (float)
-     - nb_steps       : number of time steps (int)
-     - nb_simuls      : number of simulations (int)
-     - seed           : random seed (int)
-     - dS0            : S0 differential
-    Outputs:
-     - american D&O Call delta (float)
-    """
-    dS0 = S0 / 200
-    price_up = MC_Pricing(strike=strike, barrier=barrier, S0=S0+dS0, v0=v0, risk_free_rate=risk_free_rate,
-                          maturity=maturity, rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps,
-                          nb_simuls=nb_simuls, seed=seed)
-    price_down = MC_Pricing(strike=strike, barrier=barrier, S0=S0-dS0, v0=v0, risk_free_rate=risk_free_rate,
-                          maturity=maturity, rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps,
-                          nb_simuls=nb_simuls, seed=seed)
-    return (price_up - price_down) / (2 * dS0)
 
 
 def DeltaAAD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate: float, maturity: float, rho: float,
