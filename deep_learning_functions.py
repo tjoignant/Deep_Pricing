@@ -31,7 +31,8 @@ def GeneratePathsHestonEuler(S0: float, v0: float, risk_free_rate: float, maturi
     S = S_it
     for rdn in Z:
         S_it = S_it * torch.exp((risk_free_rate - 0.5 * v_it) * dt + torch.sqrt(v_it * dt) * rdn[:, 0])
-        v_it = torch.maximum(v_it + kappa * (theta - v_it) * dt + sigma * torch.sqrt(v_it * dt) * rdn[:, 1], torch.tensor(0))
+        v_it = torch.maximum(v_it + kappa * (theta - v_it) * dt + sigma * torch.sqrt(v_it * dt) * rdn[:, 1],
+                             torch.tensor(0))
         S = torch.cat((S, S_it), 0)
     S = S.view(nb_steps + 1, nb_simuls)
     return S.T
@@ -261,14 +262,20 @@ def HestonLSM(strike: float, barrier: float, v0: float, risk_free_rate: float, m
     X_list = torch.linspace(10, 200, nb_simuls)
     Y_list = []
     dYdX_list = []
-    for S0, seed in zip(X_list, seed_list):
-        S_matrix = GeneratePathsHestonEuler(S0=S0, v0=v0, risk_free_rate=risk_free_rate, maturity=maturity, rho=rho,
-                                            kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps, nb_simuls=1,
-                                            seed=seed)
+    for i in range(0, nb_simuls):
+        # Generate Path With Heston
+        S_matrix = GeneratePathsHestonEuler(S0=X_list[i], v0=v0, risk_free_rate=risk_free_rate, maturity=maturity,
+                                            rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps,
+                                            nb_simuls=1, seed=seed_list[i])
+        # Compute Path Payoff
         Y_list.append(Payoff(strike=strike, barrier=barrier, S=S_matrix[0]))
-        dYdX_list.append(DeltaAAD(strike=strike, barrier=barrier, S0=S0, v0=v0, risk_free_rate=risk_free_rate,
+        # Compute Delta
+        dYdX_list.append(DeltaAAD(strike=strike, barrier=barrier, S0=X_list[i], v0=v0, risk_free_rate=risk_free_rate,
                                   maturity=maturity, rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps,
-                                  nb_simuls=1, seed=seed))
+                                  nb_simuls=1, seed=seed_list[i]))
+        # Display Dataset Generation Evolution
+        if i != 0 and i != nb_simuls and i % (nb_simuls/4) == 0:
+            print(f"  [info] - {int(i/nb_simuls*100)}% Dataset Generated")
     return X_list, torch.tensor(Y_list), torch.tensor(dYdX_list)
 
 
@@ -290,14 +297,18 @@ def normalize_data(X: list, Y: list, dYdX: list):
      - normalized pathwise differentials (1D array)
      - cost function differential weight (float)
     """
+    # Normalize X
     X_mean = torch.mean(X)
     X_std = torch.std(X)
     X_norm = torch.div(X - X_mean, X_std)
+    # Normalize Y
     Y_mean = torch.mean(Y)
     Y_std = torch.std(Y)
     Y_norm = torch.div(Y - Y_mean, Y_std)
+    # Normalize dYdX
     dYdX_mean = torch.mean(dYdX)
     dYdX_std = torch.std(dYdX)
     dYdX_norm = torch.div(dYdX - dYdX_mean, dYdX_std)
+    # Differential Weight
     lambda_j = 1 / torch.sqrt((1/len(dYdX_norm)) * torch.sum(torch.square(dYdX_norm)))
     return X_mean, X_std, X_norm, Y_mean, Y_std, Y_norm, dYdX_mean, dYdX_std, dYdX_norm, lambda_j

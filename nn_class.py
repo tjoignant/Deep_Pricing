@@ -99,7 +99,7 @@ def training(model, X_norm, Y_norm, nb_epochs, dYdX_norm=None, lambda_j=None):
     # Optimizer
     optimizer = optim.Adam(params=model.parameters(), lr=0.1)
     # Optimization Loop
-    for i in range(1, nb_epochs+1):
+    for i in range(0, nb_epochs):
         optimizer.zero_grad()
         loss = criterion(model, X_norm, Y_norm, dYdX_norm, lambda_j, alpha)
         # Update Weights
@@ -108,6 +108,6 @@ def training(model, X_norm, Y_norm, nb_epochs, dYdX_norm=None, lambda_j=None):
         # Store Cost Value
         model.cost_values.append(loss.item())
         # Display Training Evolution
-        if i != nb_epochs and i % 25 == 0:
+        if i != 0 and i != nb_epochs and i % (nb_epochs/4) == 0:
             print(f"  [info] - {int(i/nb_epochs*100)}% NN Training Completed")
     return model
