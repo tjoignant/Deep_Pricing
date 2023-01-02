@@ -29,6 +29,9 @@ nb_hidden_layers = 4
 nb_neurones = 20
 nb_epochs = 100
 
+# FD Step
+dS0 = pow(10, -4)
+
 # -------------------------------------------------------------------------------------------------------------------- #
 
 # Generate Normalized Training Set
@@ -54,8 +57,6 @@ differential_nn = training(model=differential_nn, X_norm=X_norm, Y_norm=Y_norm, 
                            dYdX_norm=dYdX_norm, lambda_j=lambda_j)
 end = time.perf_counter()
 print(f"Differential NN Trained ({round(end - start, 1)}s)")
-
-dS0 = pow(10, -4)
 
 # Price Classic Neural Network
 start = time.perf_counter()
