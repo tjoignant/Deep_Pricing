@@ -47,20 +47,21 @@ class Twin_Network(nn.Module):
 
     def predict_price(self, X, X_mean, X_std, Y_mean, Y_std):
         # Forward Propagation
-        X_norm = torch.div(torch.tensor([X]) - X_mean, X_std)
-        Y_norm = self.forward(X_norm)
+        X = torch.tensor([X])
+        X_norm = torch.div(X - X_mean, X_std)
+        Y_norm = self.forward(X_norm)[0]
         Y = Y_norm * Y_std + Y_mean
         return Y
 
     def predict_price_and_diffs(self, X, X_mean, X_std, Y_mean, Y_std, dYdX_mean, dYdX_std):
         # Forward Propagation
-        X_norm = torch.div(torch.tensor([X]) - X_mean, X_std)
-        Y_norm = self.forward(X_norm)
+        X = torch.tensor([X], requires_grad=True)
+        X_norm = torch.div(X - X_mean, X_std)
+        Y_norm = self.forward(X_norm)[0]
         Y = Y_norm * Y_std + Y_mean
         # Backward Propagation
-        torch.autograd.grad(Y, torch.tensor([X]), retain_graph=True)
         Y.backward()
-        dYdX_norm = X.grad
+        dYdX_norm = X.grad[0]
         dYdX = dYdX_norm * dYdX_std + dYdX_mean
         return Y, dYdX
 
@@ -98,7 +99,7 @@ def training(model, X_norm, Y_norm, nb_epochs, dYdX_norm=None, lambda_j=None):
     # Optimizer
     optimizer = optim.Adam(params=model.parameters(), lr=0.1)
     # Optimization Loop
-    for i in range(0, nb_epochs):
+    for i in range(1, nb_epochs+1):
         optimizer.zero_grad()
         loss = criterion(model, X_norm, Y_norm, dYdX_norm, lambda_j, alpha)
         # Update Weights
@@ -106,5 +107,7 @@ def training(model, X_norm, Y_norm, nb_epochs, dYdX_norm=None, lambda_j=None):
         optimizer.step()
         # Store Cost Value
         model.cost_values.append(loss.item())
-        print(i+1, " - ", loss.item())
+        # Display Training Evolution
+        if i != nb_epochs and i % 25 == 0:
+            print(f"  [info] - {int(i/nb_epochs*100)}% NN Training Completed")
     return model

@@ -285,10 +285,11 @@ def normalize_data(X: list, Y: list, dYdX: list):
      - labels mean (float)
      - labels stdev (float)
      - labels samples (1D array)
+     - pathwise differentials mean (float)
+     - pathwise differentials stdev (float)
      - normalized pathwise differentials (1D array)
-     - differential weights of the cost function (float)
+     - cost function differential weight (float)
     """
-    N = 1
     X_mean = torch.mean(X)
     X_std = torch.std(X)
     X_norm = torch.div(X - X_mean, X_std)
@@ -298,5 +299,5 @@ def normalize_data(X: list, Y: list, dYdX: list):
     dYdX_mean = torch.mean(dYdX)
     dYdX_std = torch.std(dYdX)
     dYdX_norm = torch.div(dYdX - dYdX_mean, dYdX_std)
-    lambda_j = 1 / torch.sqrt((1/N) * torch.sum(dYdX_norm * dYdX_norm))
-    return X_mean, X_std, X_norm, Y_mean, Y_std, Y_norm, dYdX_norm, lambda_j
+    lambda_j = 1 / torch.sqrt((1/len(dYdX_norm)) * torch.sum(torch.square(dYdX_norm)))
+    return X_mean, X_std, X_norm, Y_mean, Y_std, Y_norm, dYdX_mean, dYdX_std, dYdX_norm, lambda_j
