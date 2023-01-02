@@ -59,7 +59,7 @@ print("\nADD Greeks")
 print(f" - Delta: {delta}")
 print(f" - Gamma: {gamma}")
 print(f" - Rho: {rho}")
-print(f" - Vega: {vega}")
+print(f" - Vega: {vega}\n")
 
 
 # -------------------------------------------------------------------------------------------------------------------- #
