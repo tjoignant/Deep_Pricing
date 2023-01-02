@@ -1,7 +1,8 @@
 import os
+import time
 import matplotlib.pyplot as plt
 
-from monte_carlo_functions import *
+from FD_functions import *
 
 # Down & Out Call Option Parameters
 strike = 100
@@ -22,49 +23,54 @@ seed = 123
 nb_steps = 252
 nb_simuls = 1000
 
-
 # -------------------------------------------------------------------------------------------------------------------- #
-# PART 1: Pricing and hedging by Monte Carlo
 
-# Heston Diffusion
-S_test = GeneratePathsHestonEuler(S0=S0, v0=v0, risk_free_rate=risk_free_rate, maturity=maturity, rho=rho, kappa=kappa,
-                                  theta=theta, sigma=sigma, nb_steps=nb_steps, nb_simuls=nb_simuls, seed=seed)
-print(S_test)
-
-# Payoff / Pricing
-payoff = Payoff(strike=strike, barrier=barrier, S=S_test[0])
+# Price
+start = time.perf_counter()
 price = MC_Pricing(strike=strike, barrier=barrier, S0=S0, v0=v0, risk_free_rate=risk_free_rate, maturity=maturity,
                    rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps, nb_simuls=nb_simuls, seed=seed)
-print("\nDiffusion")
-print(f" - Average S_T: {np.mean(S_test[:, -1])}")
-print(f" - Payoff Simul_0: {payoff}")
-print(f" - Payoff Price: {price}")
+end = time.perf_counter()
+print("\nResults")
+print(f" - Price: {price} ({round(end - start, 1)}s)")
 
-# FD Greeks
+# Delta
+start = time.perf_counter()
 delta = DeltaFD(strike=strike, barrier=barrier, S0=S0, v0=v0, risk_free_rate=risk_free_rate, maturity=maturity,
                 rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps, nb_simuls=nb_simuls, seed=seed)
+end = time.perf_counter()
+print(f" - Delta: {delta} ({round(end - start, 1)}s)")
+
+# Gamma
+start = time.perf_counter()
 gamma = GammaFD(strike=strike, barrier=barrier, S0=S0, v0=v0, risk_free_rate=risk_free_rate, maturity=maturity,
                 rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps, nb_simuls=nb_simuls, seed=seed)
+end = time.perf_counter()
+print(f" - Gamma: {gamma} ({round(end - start, 1)}s)")
+
+# Rho
+start = time.perf_counter()
 rho = RhoFD(strike=strike, barrier=barrier, S0=S0, v0=v0, risk_free_rate=risk_free_rate, maturity=maturity,
             rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps, nb_simuls=nb_simuls, seed=seed)
+end = time.perf_counter()
+print(f" - Rho: {rho} ({round(end - start, 1)}s)")
+
+# Vega
+start = time.perf_counter()
 vega = VegaFD(strike=strike, barrier=barrier, S0=S0, v0=v0, risk_free_rate=risk_free_rate, maturity=maturity,
             rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps, nb_simuls=nb_simuls, seed=seed)
-print("\nFD Greeks")
-print(f" - Delta: {delta}")
-print(f" - Gamma: {gamma}")
-print(f" - Rho: {rho}")
-print(f" - Vega: {vega}\n")
-
-
-# -------------------------------------------------------------------------------------------------------------------- #
-# PART 2: Pricing and hedging by differential deep learning
+end = time.perf_counter()
+print(f" - Vega: {vega} ({round(end - start, 1)}s)\n")
 
 # LSM Dataset
+start = time.perf_counter()
 X, Y, dYdX = HestonLSM(strike=strike, barrier=barrier, v0=v0, risk_free_rate=risk_free_rate, maturity=maturity,
                        rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps, nb_simuls=nb_simuls,
                        seed=seed)
+end = time.perf_counter()
+print(f"LSM Dataset Generated ({round(end - start, 1)}s)")
 
 # MC Dataset
+start = time.perf_counter()
 MC_prices = []
 MC_deltas = []
 S0_list = np.linspace(10, 200, 30)
@@ -75,6 +81,8 @@ for S0 in S0_list:
     MC_deltas.append(DeltaFD(strike=strike, barrier=barrier, S0=S0, v0=v0, risk_free_rate=risk_free_rate,
                              maturity=maturity, rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps,
                              nb_simuls=nb_simuls, seed=seed))
+end = time.perf_counter()
+print(f"MC Dataset Generated ({round(end - start, 1)}s)")
 
 # Fig 1: Pricing Function
 fig1, ax1 = plt.subplots(figsize=(15, 7.5))
@@ -97,8 +105,8 @@ ax2.legend()
 # Save Figures
 if not os.path.exists('results'):
     os.makedirs('results')
-fig1.savefig("results/pricing_function.png")
-fig2.savefig("results/delta_function.png")
+fig1.savefig("results/FD_pricing_function.png")
+fig2.savefig("results/FD_delta_function.png")
 
 # Show Graphs
 plt.show()

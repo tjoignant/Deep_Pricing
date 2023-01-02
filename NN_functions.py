@@ -78,12 +78,13 @@ def MSE_standard(model, X_norm, Y_norm):
 def MSE_differential(model, X_norm, Y_norm, dYdX_norm, lambda_j, alpha):
     loss = alpha * MSE_standard(model, X_norm, Y_norm)
     if alpha != 1:
+        ds = pow(10, -4)
         for x, z in zip(X_norm, dYdX_norm):
-            x_plus = torch.tensor([x+0.0005], requires_grad=True)
-            x_neg = torch.tensor([x-0.0005], requires_grad=True)
+            x_plus = torch.tensor([x+ds], requires_grad=True)
+            x_neg = torch.tensor([x-ds], requires_grad=True)
             y_pred_plus = model(x_plus)[0]
             y_pred_neg = model(x_neg)[0]
-            z_pred = (y_pred_plus - y_pred_neg) / 0.001
+            z_pred = (y_pred_plus - y_pred_neg) / (2*ds)
             loss += torch.div(torch.square(z - z_pred), len(X_norm)) * lambda_j * (1 - alpha)
     return loss
 

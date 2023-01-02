@@ -2,8 +2,8 @@ import time
 import torch
 import matplotlib.pyplot as plt
 
-from nn_class import Twin_Network, training
-from deep_learning_functions import HestonLSM, normalize_data
+from NN_functions import Twin_Network, training
+from AAD_functions import HestonLSM, normalize_data
 
 # Down & Out Call Option Parameters
 strike = 100
@@ -29,6 +29,8 @@ nb_hidden_layers = 4
 nb_neurones = 20
 nb_epochs = 100
 
+# -------------------------------------------------------------------------------------------------------------------- #
+
 # Generate Normalized Training Set
 start = time.perf_counter()
 X, Y, dYdX = HestonLSM(strike=strike, barrier=barrier, v0=v0.clone(), risk_free_rate=risk_free_rate.clone(),
@@ -53,18 +55,28 @@ differential_nn = training(model=differential_nn, X_norm=X_norm, Y_norm=Y_norm, 
 end = time.perf_counter()
 print(f"Differential NN Trained ({round(end - start, 1)}s)")
 
+dS0 = pow(10, -4)
+
 # Price Classic Neural Network
 start = time.perf_counter()
 classic_nn_price = classic_nn.predict_price(S0, X_mean, X_std, Y_mean, Y_std)
+classic_nn_price_up = classic_nn.predict_price(S0+dS0, X_mean, X_std, Y_mean, Y_std)
+classic_nn_price_down = classic_nn.predict_price(S0-dS0, X_mean, X_std, Y_mean, Y_std)
+classic_nn_delta_FD = (classic_nn_price_up - classic_nn_price_down) / (2*dS0)
 end = time.perf_counter()
-print(f"Option Priced With Classic NN ({round(end - start, 1)}s)")
+print(f"Classic NN Pricing ({round(end - start, 1)}s)")
 
 # Price Differentiated Neural Network
 start = time.perf_counter()
-differential_nn_price, differential_nn_delta = \
+differential_nn_price, differential_nn_delta_NN = \
     differential_nn.predict_price_and_diffs(S0, X_mean, X_std, Y_mean, Y_std, dYdX_mean, dYdX_std)
+differential_nn_price_up, _ = \
+    differential_nn.predict_price_and_diffs(S0+dS0, X_mean, X_std, Y_mean, Y_std, dYdX_mean, dYdX_std)
+differential_nn_price_down, _ = \
+    differential_nn.predict_price_and_diffs(S0-dS0, X_mean, X_std, Y_mean, Y_std, dYdX_mean, dYdX_std)
+differential_nn_delta_FD = (differential_nn_price_up - differential_nn_price_down) / (2*dS0)
 end = time.perf_counter()
-print(f"Option Priced & Differentiated With Differential NN ({round(end - start, 1)}s)")
+print(f"Differential NN Pricing ({round(end - start, 1)}s)")
 
 # Plot NN Training Cost Evolution
 plt.plot(range(1, nb_epochs+1), classic_nn.cost_values, label="Classic")
@@ -73,13 +85,15 @@ plt.xlabel("Nb of epochs")
 plt.title("NN Training Cost Evolution")
 plt.legend()
 plt.grid()
-plt.savefig("results/nn_training.png")
+plt.savefig("results/NN_training_cost.png")
 
 # Display Results
 print("\nResults:")
 print(f" - Classic NN Price: {classic_nn_price}")
+print(f" - Classic NN FD Delta: {classic_nn_delta_FD}")
 print(f" - Differential NN Price: {differential_nn_price}")
-print(f" - Differential NN Delta: {differential_nn_delta}")
+print(f" - Differential NN Delta: {differential_nn_delta_NN}")
+print(f" - Differential NN FD Delta: {differential_nn_delta_FD}")
 
 # Display Graphs
 plt.show()
