@@ -128,7 +128,7 @@ ax2.legend()
 # Fig 3: Standard Error
 fig3, ax3 = plt.subplots(figsize=(15, 7.5))
 ax3.plot(nb_simuls_list, confidence_int_list)
-ax3.set_xlabel('Number of paths')
+ax3.set_xlabel('Number of Paths')
 ax3.set_ylabel('Size of Interval Confidence')
 ax3.grid()
 
