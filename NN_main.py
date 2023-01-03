@@ -92,9 +92,11 @@ plt.savefig("results/NN_training_cost.png")
 print("\nResults:")
 print(f" - Classic NN Price: {classic_nn_price}")
 print(f" - Classic NN FD Delta: {classic_nn_delta_FD}")
+print(f" - Classic NN Final Cost: {classic_nn.cost_values[-1]}")
 print(f" - Differential NN Price: {differential_nn_price}")
 print(f" - Differential NN Delta: {differential_nn_delta_NN}")
 print(f" - Differential NN FD Delta: {differential_nn_delta_FD}")
+print(f" - Differential NN Final Cost: {differential_nn.cost_values[-1]}")
 
 # Display Graphs
 plt.show()
