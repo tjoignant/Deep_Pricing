@@ -56,7 +56,7 @@ def MC_Pricing(strike: float, barrier: float, S0: float, v0: float, risk_free_ra
      - strike         : american D&O Call strike (float)
      - barrier        : american D&O Call barrier (float)
      - S0, v0         : initial asset spot and variance (float)
-     - risk_free_rate : yearly asset continuous drift (perc)
+     - risk_free_rate : yearly asset continuous drift (float)
      - maturity       : yearly duration of simulation (float)
      - rho            : correlation between asset returns and variance (float)
      - kappa          : rate of mean reversion in variance process (float)
@@ -84,7 +84,7 @@ def DeltaFD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate:
      - strike         : american D&O Call strike (float)
      - barrier        : american D&O Call barrier (float)
      - S0, v0         : initial asset spot and variance (float)
-     - risk_free_rate : yearly asset continuous drift (perc)
+     - risk_free_rate : yearly asset continuous drift (float)
      - maturity       : yearly duration of simulation (float)
      - rho            : correlation between asset returns and variance (float)
      - kappa          : rate of mean reversion in variance process (float)
@@ -97,7 +97,7 @@ def DeltaFD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate:
     Outputs:
      - american D&O Call delta (float)
     """
-    dS0 = S0 / 200
+    dS0 = pow(10, -4)
     price_up = MC_Pricing(strike=strike, barrier=barrier, S0=S0+dS0, v0=v0, risk_free_rate=risk_free_rate,
                           maturity=maturity, rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps,
                           nb_simuls=nb_simuls, seed=seed)
@@ -114,7 +114,7 @@ def GammaFD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate:
      - strike         : american D&O Call strike (float)
      - barrier        : american D&O Call barrier (float)
      - S0, v0         : initial asset spot and variance (float)
-     - risk_free_rate : yearly asset continuous drift (perc)
+     - risk_free_rate : yearly asset continuous drift (float)
      - maturity       : yearly duration of simulation (float)
      - rho            : correlation between asset returns and variance (float)
      - kappa          : rate of mean reversion in variance process (float)
@@ -127,7 +127,7 @@ def GammaFD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate:
     Outputs:
      - american D&O Call gamma (float)
     """
-    dS0 = S0 / 200
+    dS0 = pow(10, -4)
     price_up = MC_Pricing(strike=strike, barrier=barrier, S0=S0+dS0, v0=v0, risk_free_rate=risk_free_rate,
                           maturity=maturity, rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps,
                           nb_simuls=nb_simuls, seed=seed)
@@ -147,7 +147,7 @@ def RhoFD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate: f
      - strike         : american D&O Call strike (float)
      - barrier        : american D&O Call barrier (float)
      - S0, v0         : initial asset spot and variance (float)
-     - risk_free_rate : yearly asset continuous drift (perc)
+     - risk_free_rate : yearly asset continuous drift (float)
      - maturity       : yearly duration of simulation (float)
      - rho            : correlation between asset returns and variance (float)
      - kappa          : rate of mean reversion in variance process (float)
@@ -160,7 +160,7 @@ def RhoFD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate: f
     Outputs:
      - american D&O Call rho (float)
     """
-    dr = 0.005
+    dr = pow(10, -4)
     price_up = MC_Pricing(strike=strike, barrier=barrier, S0=S0, v0=v0, risk_free_rate=risk_free_rate+dr,
                           maturity=maturity, rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps,
                           nb_simuls=nb_simuls, seed=seed)
@@ -170,24 +170,52 @@ def RhoFD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate: f
     return (price_up - price_down) / (2 * dr) / 100
 
 
-def StandardError(nb_simuls : int ,payoffvec):
+def VegaFD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate: float, maturity: float, rho: float,
+           kappa: float, theta: float, sigma: float, nb_steps=252, nb_simuls=100000, seed=1):
     """
     Inputs:
+     - strike         : american D&O Call strike (float)
+     - barrier        : american D&O Call barrier (float)
+     - S0, v0         : initial asset spot and variance (float)
+     - risk_free_rate : yearly asset continuous drift (float)
+     - maturity       : yearly duration of simulation (float)
+     - rho            : correlation between asset returns and variance (float)
+     - kappa          : rate of mean reversion in variance process (float)
+     - theta          : long-term mean of variance process (float)
+     - sigma          : vol of vol / volatility of variance process (float)
+     - nb_steps       : number of time steps (int)
      - nb_simuls      : number of simulations (int)
-     - payoffvec      : payoff vector (table of float)
+     - seed           : random seed (int)
+     - dr             : risk_free_rate differential
     Outputs:
-     - Interval Confidence
+     - american D&O Call rho (float)
     """
-    return [np.mean(payoffvec)+1.96*np.std(payoffvec)/np.sqrt(nb_simuls),np.mean(payoffvec)-1.96*np.std(payoffvec)/np.sqrt(nb_simuls)]
+    dv = pow(10, -4)
+    price_v0_up = MC_Pricing(strike=strike, barrier=barrier, S0=S0, v0=v0+dv, risk_free_rate=risk_free_rate,
+                          maturity=maturity, rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps,
+                          nb_simuls=nb_simuls, seed=seed)
+    price_v0_down = MC_Pricing(strike=strike, barrier=barrier, S0=S0, v0=v0-dv, risk_free_rate=risk_free_rate,
+                          maturity=maturity, rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps,
+                          nb_simuls=nb_simuls, seed=seed)
+    price_theta_up = MC_Pricing(strike=strike, barrier=barrier, S0=S0, v0=v0, risk_free_rate=risk_free_rate,
+                          maturity=maturity, rho=rho, kappa=kappa, theta=theta+dv, sigma=sigma, nb_steps=nb_steps,
+                          nb_simuls=nb_simuls, seed=seed)
+    price_theta_down = MC_Pricing(strike=strike, barrier=barrier, S0=S0, v0=v0, risk_free_rate=risk_free_rate,
+                          maturity=maturity, rho=rho, kappa=kappa, theta=theta-dv, sigma=sigma, nb_steps=nb_steps,
+                          nb_simuls=nb_simuls, seed=seed)
+    vega_v0 = (price_v0_up - price_v0_down) / (2 * dv) * 2 * np.sqrt(v0)
+    vega_theta = (price_theta_up - price_theta_down) / (2 * dv) * 2 * np.sqrt(theta)
+    return (vega_v0 + vega_theta) / 100
 
-def LSM_dataset(strike: float, barrier: float, v0: float, risk_free_rate: float, maturity: float, rho: float,
-               kappa: float, theta: float, sigma: float, nb_steps=252, nb_simuls=100000, seed=1):
+
+def HestonLSM(strike: float, barrier: float, v0: float, risk_free_rate: float, maturity: float, rho: float,
+              kappa: float, theta: float, sigma: float, nb_steps=252, nb_simuls=100000, seed=1):
     """
     Inputs:
      - strike         : american D&O Call strike (float)
      - barrier        : american D&O Call barrier (float)
      - v0             : initial asset variance (float)
-     - risk_free_rate : yearly asset continuous drift (perc)
+     - risk_free_rate : yearly asset continuous drift (float)
      - maturity       : yearly duration of simulation (float)
      - rho            : correlation between asset returns and variance (float)
      - kappa          : rate of mean reversion in variance process (float)
@@ -205,11 +233,20 @@ def LSM_dataset(strike: float, barrier: float, v0: float, risk_free_rate: float,
     X_list = np.linspace(10, 200, nb_simuls)
     Y_list = []
     dYdX_list = []
-    for S0, seed in zip(X_list, seed_list):
-        S_matrix = GeneratePathsHestonEuler(S0=S0, v0=v0, risk_free_rate=risk_free_rate, maturity=maturity, rho=rho,
-                                            kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps, nb_simuls=1,
-                                            seed=seed)
+    for i in range(0, nb_simuls):
+        # Generate Path With Heston
+        S_matrix = GeneratePathsHestonEuler(S0=X_list[i], v0=v0, risk_free_rate=risk_free_rate, maturity=maturity,
+                                            rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps,
+                                            nb_simuls=1, seed=seed_list[i])
+        # Compute Path Payoff
         Y_list.append(Payoff(strike=strike, barrier=barrier, S=S_matrix[0]))
+        # Compute Delta
+        dYdX_list.append(DeltaFD(strike=strike, barrier=barrier, S0=X_list[i], v0=v0, risk_free_rate=risk_free_rate,
+                                 maturity=maturity, rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps,
+                                 nb_simuls=1, seed=seed_list[i]))
+        # Display Dataset Generation Evolution
+        if i != 0 and i != nb_simuls and i % (nb_simuls/4) == 0:
+            print(f"  [info] - {int(i/nb_simuls*100)}% LSM Dataset Generated")
     return X_list, Y_list, dYdX_list
 
 
@@ -227,16 +264,20 @@ def normalize_data(X: list, Y: list, dYdX: list):
      - labels stdev (float)
      - labels samples (1D array)
      - normalized pathwise differentials (1D array)
-     - differential weights of the cost function (float)
+     - cost function differential weight (float)
     """
-    mean_X = np.mean(X)
-    std_X = np.std(X)
-    norm_X = (X - mean_X) / std_X
-    mean_Y = np.mean(Y)
-    std_Y = np.std(Y)
-    norm_Y = (Y - mean_Y) / std_Y
-    mean_dYdX = np.mean(dYdX)
-    std_dYdX = np.std(dYdX)
-    norm_dYdX = (dYdX - mean_dYdX) / std_dYdX
-    lambda_j = 1 / np.sqrt((1/len(dYdX)) * sum(np.power(norm_dYdX, 2)))
-    return mean_X, std_X, norm_X, mean_Y, std_Y, norm_Y, norm_dYdX, lambda_j
+    # Normalize X
+    X_mean = np.mean(X)
+    X_std = np.std(X)
+    X_norm = (X - X_mean) / X_std
+    # Normalize Y
+    Y_mean = np.mean(Y)
+    Y_std = np.std(Y)
+    Y_norm = (Y - Y_mean) / Y_std
+    # Normalize dYdX
+    dYdX_mean = np.mean(dYdX)
+    dYdX_std = np.std(dYdX)
+    dYdX_norm = (dYdX - dYdX_mean) / dYdX_std
+    # Differential Weight
+    lambda_j = 1 / np.sqrt((1/len(dYdX)) * np.sum(np.power(dYdX_norm, 2)))
+    return X_mean, X_std, X_norm, Y_mean, Y_std, Y_norm, dYdX_norm, lambda_j
