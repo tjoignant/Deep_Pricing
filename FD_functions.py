@@ -202,6 +202,17 @@ def VegaFD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate: 
     return (vega_v0 + vega_theta) / 100
 
 
+def StandardError(Y: list, nb_simuls: int):
+    """
+    Inputs:
+     - Y              : payoffs (1D array)
+     - nb_simuls      : number of simulations (int)
+    Outputs:
+     - Standard error (float)
+    """
+    return np.sqrt(np.var(Y) / nb_simuls)
+
+
 def HestonLSM(strike: float, barrier: float, v0: float, risk_free_rate: float, maturity: float, rho: float,
               kappa: float, theta: float, sigma: float, nb_steps=252, nb_simuls=100000, seed=1):
     """
