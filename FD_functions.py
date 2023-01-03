@@ -17,7 +17,6 @@ def GeneratePathsHestonEuler(S0: float, v0: float, risk_free_rate: float, maturi
      - seed           : random seed (int)
     Outputs:
      - asset prices over time (2D array)
-     - variance over time (2D array)
     """
     np.random.seed(seed)
     dt = maturity / nb_steps
@@ -33,7 +32,7 @@ def GeneratePathsHestonEuler(S0: float, v0: float, risk_free_rate: float, maturi
     return S.T
 
 
-def Payoff(strike: float, barrier: float, S: np.array):
+def Payoff(strike: float, barrier: float, S: list):
     """
     Inputs:
      - strike         : american D&O Call strike (float)
@@ -43,10 +42,9 @@ def Payoff(strike: float, barrier: float, S: np.array):
      - american D&O Call payoff (float)
     """
     if min(S) <= barrier:
-        payoff = 0
+        return 0
     else:
-        payoff = max(0, S[-1] - strike)
-    return payoff    
+        return max(0, S[-1] - strike)
 
 
 def MC_Pricing(strike: float, barrier: float, S0: float, v0: float, risk_free_rate: float, maturity: float, rho: float,
@@ -78,7 +76,7 @@ def MC_Pricing(strike: float, barrier: float, S0: float, v0: float, risk_free_ra
 
 
 def DeltaFD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate: float, maturity: float, rho: float,
-            kappa: float, theta: float, sigma: float, nb_steps=252, nb_simuls=100000, seed=1):
+            kappa: float, theta: float, sigma: float, nb_steps=252, nb_simuls=100000, seed=1, dS0=pow(10, -4)):
     """
     Inputs:
      - strike         : american D&O Call strike (float)
@@ -93,11 +91,10 @@ def DeltaFD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate:
      - nb_steps       : number of time steps (int)
      - nb_simuls      : number of simulations (int)
      - seed           : random seed (int)
-     - dS0            : S0 differential
+     - dS0            : S0 differential (float)
     Outputs:
      - american D&O Call delta (float)
     """
-    dS0 = pow(10, -4)
     price_up = MC_Pricing(strike=strike, barrier=barrier, S0=S0+dS0, v0=v0, risk_free_rate=risk_free_rate,
                           maturity=maturity, rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps,
                           nb_simuls=nb_simuls, seed=seed)
@@ -108,7 +105,7 @@ def DeltaFD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate:
 
 
 def GammaFD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate: float, maturity: float, rho: float,
-            kappa: float, theta: float, sigma: float, nb_steps=252, nb_simuls=100000, seed=1):
+            kappa: float, theta: float, sigma: float, nb_steps=252, nb_simuls=100000, seed=1, dS0=pow(10, -4)):
     """
     Inputs:
      - strike         : american D&O Call strike (float)
@@ -123,11 +120,10 @@ def GammaFD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate:
      - nb_steps       : number of time steps (int)
      - nb_simuls      : number of simulations (int)
      - seed           : random seed (int)
-     - dS0            : S0 differential
+     - dS0            : S0 differential (float)
     Outputs:
      - american D&O Call gamma (float)
     """
-    dS0 = pow(10, -4)
     price_up = MC_Pricing(strike=strike, barrier=barrier, S0=S0+dS0, v0=v0, risk_free_rate=risk_free_rate,
                           maturity=maturity, rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps,
                           nb_simuls=nb_simuls, seed=seed)
@@ -141,7 +137,7 @@ def GammaFD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate:
 
 
 def RhoFD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate: float, maturity: float, rho: float,
-          kappa: float, theta: float, sigma: float, nb_steps=252, nb_simuls=100000, seed=1):
+          kappa: float, theta: float, sigma: float, nb_steps=252, nb_simuls=100000, seed=1, dr=pow(10, -4)):
     """
     Inputs:
      - strike         : american D&O Call strike (float)
@@ -156,11 +152,10 @@ def RhoFD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate: f
      - nb_steps       : number of time steps (int)
      - nb_simuls      : number of simulations (int)
      - seed           : random seed (int)
-     - dr             : risk_free_rate differential
+     - dr             : risk_free_rate differential (float)
     Outputs:
      - american D&O Call rho (float)
     """
-    dr = pow(10, -4)
     price_up = MC_Pricing(strike=strike, barrier=barrier, S0=S0, v0=v0, risk_free_rate=risk_free_rate+dr,
                           maturity=maturity, rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps,
                           nb_simuls=nb_simuls, seed=seed)
@@ -171,7 +166,7 @@ def RhoFD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate: f
 
 
 def VegaFD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate: float, maturity: float, rho: float,
-           kappa: float, theta: float, sigma: float, nb_steps=252, nb_simuls=100000, seed=1):
+           kappa: float, theta: float, sigma: float, nb_steps=252, nb_simuls=100000, seed=1, dv=pow(10, -4)):
     """
     Inputs:
      - strike         : american D&O Call strike (float)
@@ -186,11 +181,10 @@ def VegaFD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate: 
      - nb_steps       : number of time steps (int)
      - nb_simuls      : number of simulations (int)
      - seed           : random seed (int)
-     - dr             : risk_free_rate differential
+     - dv             : v0 & theta differential (float)
     Outputs:
      - american D&O Call rho (float)
     """
-    dv = pow(10, -4)
     price_v0_up = MC_Pricing(strike=strike, barrier=barrier, S0=S0, v0=v0+dv, risk_free_rate=risk_free_rate,
                           maturity=maturity, rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps,
                           nb_simuls=nb_simuls, seed=seed)
@@ -206,6 +200,17 @@ def VegaFD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate: 
     vega_v0 = (price_v0_up - price_v0_down) / (2 * dv) * 2 * np.sqrt(v0)
     vega_theta = (price_theta_up - price_theta_down) / (2 * dv) * 2 * np.sqrt(theta)
     return (vega_v0 + vega_theta) / 100
+
+
+def StandardError(Y: list, nb_simuls: int):
+    """
+    Inputs:
+     - Y              : payoffs (1D array)
+     - nb_simuls      : number of simulations (int)
+    Outputs:
+     - Standard error (float)
+    """
+    return np.sqrt(np.var(Y) / nb_simuls)
 
 
 def HestonLSM(strike: float, barrier: float, v0: float, risk_free_rate: float, maturity: float, rho: float,
@@ -225,9 +230,9 @@ def HestonLSM(strike: float, barrier: float, v0: float, risk_free_rate: float, m
      - nb_simuls      : number of simulations (int)
      - seed           : random seed (int)
     Outputs:
-     - training samples (1D array)
-     - labels (1D array)
-     - pathwise differentials (1D array)
+     - initial states (1D array)
+     - payoffs (1D array)
+     - differentials (1D array)
     """
     seed_list = np.arange(seed, nb_simuls + seed)
     X_list = np.linspace(10, 200, nb_simuls)
@@ -247,23 +252,25 @@ def HestonLSM(strike: float, barrier: float, v0: float, risk_free_rate: float, m
         # Display Dataset Generation Evolution
         if i != 0 and i != nb_simuls and i % (nb_simuls/4) == 0:
             print(f"  [info] - {int(i/nb_simuls*100)}% LSM Dataset Generated")
-    return X_list, Y_list, dYdX_list
+    return X_list, np.array(Y_list), np.array(dYdX_list)
 
 
 def normalize_data(X: list, Y: list, dYdX: list):
     """
     Inputs:
-     - training samples (1D array)
-     - labels (1D array)
-     - pathwise differentials (1D array)
+     - X              : initial states (1D array)
+     - Y              : payoffs (1D array)
+     - dYdX           : differentials (1D array)
     Outputs:
-     - training samples mean (float)
-     - training samples stdev (float)
-     - normalized training samples (1D array)
-     - labels mean (float)
-     - labels stdev (float)
-     - labels samples (1D array)
-     - normalized pathwise differentials (1D array)
+     - initial states mean (float)
+     - initial states stdev (float)
+     - initial states normalized (1D array)
+     - payoffs mean (float)
+     - payoffs stdev (float)
+     - payoffs normalized (1D array)
+     - differentials mean (float)
+     - differentials stdev (float)
+     - differentials normalized (1D array)
      - cost function differential weight (float)
     """
     # Normalize X
@@ -280,4 +287,4 @@ def normalize_data(X: list, Y: list, dYdX: list):
     dYdX_norm = (dYdX - dYdX_mean) / dYdX_std
     # Differential Weight
     lambda_j = 1 / np.sqrt((1/len(dYdX)) * np.sum(np.power(dYdX_norm, 2)))
-    return X_mean, X_std, X_norm, Y_mean, Y_std, Y_norm, dYdX_norm, lambda_j
+    return X_mean, X_std, X_norm, Y_mean, Y_std, Y_norm, dYdX_mean, dYdX_std, dYdX_norm, lambda_j

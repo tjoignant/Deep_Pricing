@@ -16,8 +16,7 @@ def GeneratePathsHestonEuler(S0: float, v0: float, risk_free_rate: float, maturi
      - nb_simuls      : number of simulations (int)
      - seed           : random seed (int)
     Outputs:
-     - asset prices over time (2D array)
-     - variance over time (2D array)
+     - asset prices over time (2D tensor)
     """
     np.random.seed(seed)
     dt = maturity / nb_steps
@@ -37,7 +36,7 @@ def GeneratePathsHestonEuler(S0: float, v0: float, risk_free_rate: float, maturi
     return S.T
 
 
-def Payoff(strike: float, barrier: float, S: np.array):
+def Payoff(strike: float, barrier: float, S: list):
     """
     Inputs:
      - strike         : american D&O Call strike (float)
@@ -82,7 +81,7 @@ def MC_Pricing(strike: float, barrier: float, S0: float, v0: float, risk_free_ra
 
 
 def DeltaFD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate: float, maturity: float, rho: float,
-            kappa: float, theta: float, sigma: float, nb_steps=252, nb_simuls=100000, seed=1):
+            kappa: float, theta: float, sigma: float, nb_steps=252, nb_simuls=100000, seed=1, dS0=pow(10, -4)):
     """
     Inputs:
      - strike         : american D&O Call strike (float)
@@ -97,11 +96,10 @@ def DeltaFD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate:
      - nb_steps       : number of time steps (int)
      - nb_simuls      : number of simulations (int)
      - seed           : random seed (int)
-     - dS0            : S0 differential
+     - dS0            : S0 differential (float)
     Outputs:
      - american D&O Call delta (float)
     """
-    dS0 = pow(10, -4)
     price_up = MC_Pricing(strike=strike, barrier=barrier, S0=S0+dS0, v0=v0, risk_free_rate=risk_free_rate,
                           maturity=maturity, rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps,
                           nb_simuls=nb_simuls, seed=seed)
@@ -127,7 +125,6 @@ def DeltaAAD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate
      - nb_steps       : number of time steps (int)
      - nb_simuls      : number of simulations (int)
      - seed           : random seed (int)
-     - dS0            : S0 differential
     Outputs:
      - american D&O Call delta (float)
     """
@@ -158,7 +155,6 @@ def GammaAAD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate
      - nb_steps       : number of time steps (int)
      - nb_simuls      : number of simulations (int)
      - seed           : random seed (int)
-     - dS0            : S0 differential
     Outputs:
      - american D&O Call gamma (float)
     """
@@ -189,7 +185,6 @@ def RhoAAD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate: 
      - nb_steps       : number of time steps (int)
      - nb_simuls      : number of simulations (int)
      - seed           : random seed (int)
-     - dS0            : S0 differential
     Outputs:
      - american D&O Call rho (float)
     """
@@ -220,7 +215,6 @@ def VegaAAD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate:
      - nb_steps       : number of time steps (int)
      - nb_simuls      : number of simulations (int)
      - seed           : random seed (int)
-     - dS0            : S0 differential
     Outputs:
      - american D&O Call vega (float)
     """
@@ -234,6 +228,17 @@ def VegaAAD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate:
         return (v0.grad.clone() * 2 * torch.sqrt(v0) + theta.grad.clone() * 2 * torch.sqrt(theta)) / 100
     else:
         return 0
+
+
+def StandardError(Y: list, nb_simuls: int):
+    """
+    Inputs:
+     - Y              : payoffs (1D tensor)
+     - nb_simuls      : number of simulations (int)
+    Outputs:
+     - Standard error (float)
+    """
+    return torch.sqrt(torch.var(Y) / nb_simuls)
 
 
 def HestonLSM(strike: float, barrier: float, v0: float, risk_free_rate: float, maturity: float, rho: float,
@@ -253,9 +258,9 @@ def HestonLSM(strike: float, barrier: float, v0: float, risk_free_rate: float, m
      - nb_simuls      : number of simulations (int)
      - seed           : random seed (int)
     Outputs:
-     - training samples (1D array)
-     - labels (1D array)
-     - pathwise differentials (1D array)
+     - initial states (1D tensor)
+     - payoffs (1D tensor)
+     - differentials (1D tensor)
     """
     seed_list = np.arange(seed, nb_simuls + seed)
     X_list = torch.linspace(10, 200, nb_simuls)
@@ -281,19 +286,19 @@ def HestonLSM(strike: float, barrier: float, v0: float, risk_free_rate: float, m
 def normalize_data(X: list, Y: list, dYdX: list):
     """
     Inputs:
-     - training samples (1D array)
-     - labels (1D array)
-     - pathwise differentials (1D array)
+     - X              : initial states (1D tensor)
+     - Y              : payoffs (1D tensor)
+     - dYdX           : differentials (1D tensor)
     Outputs:
-     - training samples mean (float)
-     - training samples stdev (float)
-     - normalized training samples (1D array)
-     - labels mean (float)
-     - labels stdev (float)
-     - labels samples (1D array)
-     - pathwise differentials mean (float)
-     - pathwise differentials stdev (float)
-     - normalized pathwise differentials (1D array)
+     - initial states mean (float)
+     - initial states stdev (float)
+     - initial states normalized (1D tensor)
+     - payoffs mean (float)
+     - payoffs stdev (float)
+     - payoffs normalized (1D tensor)
+     - differentials mean (float)
+     - differentials stdev (float)
+     - differentials normalized (1D tensor)
      - cost function differential weight (float)
     """
     # Normalize X
