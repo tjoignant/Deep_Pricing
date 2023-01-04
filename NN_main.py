@@ -41,7 +41,7 @@ X, Y, dYdX = HestonLSM(strike=strike, barrier=barrier, v0=v0.clone(), risk_free_
                        sigma=sigma.clone(), nb_steps=nb_steps, nb_simuls=nb_simuls, seed=seed)
 X_mean, X_std, X_norm, Y_mean, Y_std, Y_norm, dYdX_mean, dYdX_std, dYdX_norm, lambda_j = normalize_data(X, Y, dYdX)
 end = time.perf_counter()
-print(f"Normalized Training Set Generated ({round(end - start, 1)}s)")
+print(f"\nNormalized Training Set Generated ({round(end - start, 1)}s)")
 
 # Train Classic Neural Network
 start = time.perf_counter()
