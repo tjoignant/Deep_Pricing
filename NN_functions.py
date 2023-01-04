@@ -133,7 +133,7 @@ def MSE_differential(model: Twin_Network, X_norm: list, Y_norm: list, dYdX_norm:
             x_neg = torch.tensor([x-ds_norm])
             y_pred_plus = model(x_plus)[0]
             y_pred_neg = model(x_neg)[0]
-            z_pred = (y_pred_plus - y_pred_neg) / (2*ds)
+            z_pred = (y_pred_plus - y_pred_neg) / (2*ds_norm)
             loss += torch.div(torch.square(z - z_pred), len(X_norm)) * lambda_j * (1 - alpha)
     return loss
 
