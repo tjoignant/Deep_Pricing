@@ -61,6 +61,29 @@ vega = VegaFD(strike=strike, barrier=barrier, S0=S0, v0=v0, risk_free_rate=risk_
 end = time.perf_counter()
 print(f" - Vega: {vega} ({round(end - start, 1)}s)\n")
 
+# Greeks Variance
+bump_list = np.linspace(0.05, 0.5, 30)
+var_delta_list = []
+var_gamma_list = []
+var_rho_list = []
+for bump in bump_list:
+    delta_list = []
+    gamma_list = []
+    rho_list = []
+    for j in range(10):
+        delta_list.append(DeltaFD(strike=strike, barrier=barrier, S0=S0, v0=v0, risk_free_rate=risk_free_rate,
+                                  maturity=maturity, rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps,
+                                  nb_simuls=nb_simuls, seed=j, dS0=bump/100))
+        gamma_list.append(GammaFD(strike=strike, barrier=barrier, S0=S0, v0=v0, risk_free_rate=risk_free_rate,
+                                  maturity=maturity, rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps,
+                                  nb_simuls=nb_simuls, seed=j, dS0=bump/100))
+        rho_list.append(RhoFD(strike=strike, barrier=barrier, S0=S0, v0=v0, risk_free_rate=risk_free_rate,
+                              maturity=maturity, rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps,
+                              nb_simuls=nb_simuls, seed=j, dr=bump/10000))
+    var_delta_list.append(np.var(delta_list))
+    var_gamma_list.append(np.var(gamma_list))
+    var_rho_list.append(np.var(rho_list))
+
 # Standard Error
 start = time.perf_counter()
 confidence_int_list = []
@@ -76,58 +99,41 @@ for my_nb_simuls in nb_simuls_list:
 end = time.perf_counter()
 print(f"Standard Error Evolution Computed ({round(end - start, 1)}s)")
 
-# LSM Dataset
-start = time.perf_counter()
-X, Y, dYdX = HestonLSM(strike=strike, barrier=barrier, v0=v0, risk_free_rate=risk_free_rate, maturity=maturity,
-                       rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps, nb_simuls=nb_simuls,
-                       seed=seed)
-end = time.perf_counter()
-print(f"LSM Dataset Generated ({round(end - start, 1)}s)")
-
-# MC Dataset
-start = time.perf_counter()
-MC_prices = []
-MC_deltas = []
-S0_list = np.linspace(10, 200, 30)
-for S0 in S0_list:
-    MC_prices.append(MC_Pricing(strike=strike, barrier=barrier, S0=S0, v0=v0, risk_free_rate=risk_free_rate,
-                                maturity=maturity, rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps,
-                                nb_simuls=nb_simuls, seed=seed))
-    MC_deltas.append(DeltaFD(strike=strike, barrier=barrier, S0=S0, v0=v0, risk_free_rate=risk_free_rate,
-                             maturity=maturity, rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps,
-                             nb_simuls=nb_simuls, seed=seed))
-end = time.perf_counter()
-print(f"MC Dataset Generated ({round(end - start, 1)}s)")
-
-# Fig 1: Pricing Function
+# Fig 1: Standard Error
 fig1, ax1 = plt.subplots(figsize=(15, 7.5))
-ax1.scatter(X, Y, marker="+", color="grey", label='LSM samples')
-ax1.plot(S0_list, MC_prices, marker="o", color="green", label='MC pricing')
-ax1.set_xlabel('X')
-ax1.set_ylabel('Y')
-ax1.legend()
+ax1.plot(nb_simuls_list, confidence_int_list)
+ax1.set_xlabel('Number of Paths')
+ax1.set_ylabel('Size of Interval Confidence')
+ax1.grid()
 
-# Fig 2: Delta Function
+# Fig 2: Delta Variance
 fig2, ax2 = plt.subplots(figsize=(15, 7.5))
-ax2.scatter(X, dYdX, marker="+", color="grey", label='LSM samples')
-ax2.plot(S0_list, MC_deltas, marker="o", color="green", label='MC pricing')
-ax2.set_xlabel('X')
-ax2.set_ylabel('dYdX')
-ax2.legend()
+ax2.plot(bump_list, var_delta_list)
+ax2.set_xlabel('Bump (in %)')
+ax2.set_ylabel('Variance of Delta')
+ax2.grid()
 
-# Fig 3: Standard Error
+# Fig 3: Gamma Variance
 fig3, ax3 = plt.subplots(figsize=(15, 7.5))
-ax3.plot(nb_simuls_list, confidence_int_list)
-ax3.set_xlabel('Number of Paths')
-ax3.set_ylabel('Size of Interval Confidence')
+ax3.plot(bump_list, var_gamma_list)
+ax3.set_xlabel('Bump (in %)')
+ax3.set_ylabel('Variance of Gamma')
 ax3.grid()
+
+# Fig 4: Rho Variance
+fig4, ax4 = plt.subplots(figsize=(15, 7.5))
+ax4.plot(bump_list/100, var_rho_list)
+ax4.set_xlabel('Bump (in %)')
+ax4.set_ylabel('Variance of Rho')
+ax4.grid()
 
 # Save Figures
 if not os.path.exists('results'):
     os.makedirs('results')
-fig1.savefig("results/FD_pricing_function.png")
-fig2.savefig("results/FD_delta_function.png")
-fig3.savefig("results/FD_confidence_interval.png")
+fig1.savefig("results/FD_confidence_interval.png")
+fig2.savefig("results/FD_delta_variance.png")
+fig3.savefig("results/FD_gamma_variance.png")
+fig4.savefig("results/FD_rho_variance.png")
 
 # Show Graphs
 plt.show()

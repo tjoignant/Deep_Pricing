@@ -66,22 +66,6 @@ vega = VegaAAD(strike=strike, barrier=barrier, S0=S0.clone(), v0=v0.clone(), ris
 end = time.perf_counter()
 print(f" - Vega: {vega} ({round(end - start, 1)}s)\n")
 
-# Standard Error
-start = time.perf_counter()
-confidence_int_list = []
-nb_simuls_list = range(1, 250)
-for my_nb_simuls in nb_simuls_list:
-    Y_list = []
-    for j in range(1, 10):
-        Y_list.append(MC_Pricing(strike=strike, barrier=barrier, S0=S0.clone(), v0=v0.clone(),
-                                 risk_free_rate=risk_free_rate.clone(), maturity=maturity, rho=rho.clone(),
-                                 kappa=kappa.clone(), theta=theta.clone(), sigma=sigma.clone(), nb_steps=nb_steps,
-                                 nb_simuls=my_nb_simuls, seed=j))
-    std = StandardError(Y=torch.tensor(Y_list), nb_simuls=my_nb_simuls)
-    confidence_int_list.append(std*1.96)
-end = time.perf_counter()
-print(f"Standard Error Evolution Computed ({round(end - start, 1)}s)")
-
 # LSM Dataset
 start = time.perf_counter()
 X, Y, dYdX = HestonLSM(strike=strike, barrier=barrier, v0=v0.clone(), risk_free_rate=risk_free_rate.clone(),
@@ -125,19 +109,11 @@ ax2.set_xlabel('X')
 ax2.set_ylabel('dYdX')
 ax2.legend()
 
-# Fig 3: Standard Error
-fig3, ax3 = plt.subplots(figsize=(15, 7.5))
-ax3.plot(nb_simuls_list, confidence_int_list)
-ax3.set_xlabel('Number of Paths')
-ax3.set_ylabel('Size of Interval Confidence')
-ax3.grid()
-
 # Save Figures
 if not os.path.exists('results'):
     os.makedirs('results')
 fig1.savefig("results/AAD_pricing_function.png")
 fig2.savefig("results/AAD_delta_function.png")
-fig3.savefig("results/AAD_confidence_interval.png")
 
 # Show Graphs
 plt.show()

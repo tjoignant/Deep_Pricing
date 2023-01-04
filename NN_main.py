@@ -80,13 +80,14 @@ end = time.perf_counter()
 print(f"Differential NN Pricing ({round(end - start, 1)}s)")
 
 # Plot NN Training Cost Evolution
-plt.plot(range(1, nb_epochs+1), classic_nn.cost_values, label="Classic")
-plt.plot(range(1, nb_epochs+1), differential_nn.cost_values, label="Differential")
-plt.xlabel("Nb of Epochs")
-plt.ylabel("Cost Value")
-plt.legend()
-plt.grid()
-plt.savefig("results/NN_training_cost.png")
+fig1, ax1 = plt.subplots(figsize=(15, 7.5))
+ax1.plot(range(1, nb_epochs+1), classic_nn.cost_values, label="Classic")
+ax1.plot(range(1, nb_epochs+1), differential_nn.cost_values, label="Differential")
+ax1.set_xlabel("Nb of Epochs")
+ax1.set_ylabel("Cost Value")
+ax1.legend()
+ax1.grid()
+fig1.savefig("results/NN_training_cost.png")
 
 # Display Results
 print("\nResults:")

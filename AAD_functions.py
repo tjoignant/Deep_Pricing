@@ -230,17 +230,6 @@ def VegaAAD(strike: float, barrier: float, S0: float, v0: float, risk_free_rate:
         return 0
 
 
-def StandardError(Y: list, nb_simuls: int):
-    """
-    Inputs:
-     - Y              : payoffs (1D tensor)
-     - nb_simuls      : number of simulations (int)
-    Outputs:
-     - Standard error (float)
-    """
-    return torch.sqrt(torch.var(Y) / nb_simuls)
-
-
 def HestonLSM(strike: float, barrier: float, v0: float, risk_free_rate: float, maturity: float, rho: float,
               kappa: float, theta: float, sigma: float, nb_steps=252, nb_simuls=100000, seed=1):
     """
@@ -277,9 +266,6 @@ def HestonLSM(strike: float, barrier: float, v0: float, risk_free_rate: float, m
         dYdX_list.append(DeltaAAD(strike=strike, barrier=barrier, S0=X_list[i], v0=v0, risk_free_rate=risk_free_rate,
                                   maturity=maturity, rho=rho, kappa=kappa, theta=theta, sigma=sigma, nb_steps=nb_steps,
                                   nb_simuls=1, seed=seed_list[i]))
-        # Display Dataset Generation Evolution
-        if i != 0 and i != nb_simuls and i % (nb_simuls/4) == 0:
-            print(f"  [info] - {int(i/nb_simuls*100)}% LSM Dataset Generated")
     return X_list, torch.tensor(Y_list), torch.tensor(dYdX_list)
 
 

@@ -168,7 +168,4 @@ def training(model: Twin_Network, X_norm: list, Y_norm: list, nb_epochs: int, dY
         optimizer.step()
         # Store Cost Value
         model.cost_values.append(loss.item())
-        # Display Training Evolution
-        if i != 0 and i != nb_epochs and i % (nb_epochs/4) == 0:
-            print(f"  [info] - {int(i/nb_epochs*100)}% NN Training Completed")
     return model
