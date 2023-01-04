@@ -127,9 +127,10 @@ def MSE_differential(model: Twin_Network, X_norm: list, Y_norm: list, dYdX_norm:
     loss = alpha * MSE_standard(model, X_norm, Y_norm)
     if alpha != 1:
         ds = pow(10, -4)
+        ds_norm = torch.div(ds - torch.mean(X_norm), torch.std(X_norm))
         for x, z in zip(X_norm, dYdX_norm):
-            x_plus = torch.tensor([x+ds], requires_grad=True)
-            x_neg = torch.tensor([x-ds], requires_grad=True)
+            x_plus = torch.tensor([x+ds_norm])
+            x_neg = torch.tensor([x-ds_norm])
             y_pred_plus = model(x_plus)[0]
             y_pred_neg = model(x_neg)[0]
             z_pred = (y_pred_plus - y_pred_neg) / (2*ds)
