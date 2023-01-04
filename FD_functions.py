@@ -1,6 +1,5 @@
 import numpy as np
 
-
 def GeneratePathsHestonEuler(S0: float, v0: float, risk_free_rate: float, maturity: float, rho: float, kappa: float,
                              theta: float, sigma: float, nb_steps=252, nb_simuls=100000, seed=1):
     """

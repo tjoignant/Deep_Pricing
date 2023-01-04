@@ -2,7 +2,6 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-
 class Twin_Network(nn.Module):
     def __init__(self, nb_inputs, nb_hidden_layer, nb_neurones, seed=1):
         super(Twin_Network, self).__init__()
